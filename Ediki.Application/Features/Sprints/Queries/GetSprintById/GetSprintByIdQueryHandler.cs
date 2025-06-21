@@ -32,9 +32,7 @@ public class GetSprintByIdQueryHandler(ISprintRepository sprintRepository) : IRe
             CreatedAt = sprint.CreatedAt,
             UpdatedAt = sprint.UpdatedAt,
             TaskCount = taskCount,
-            CompletedTaskCount = completedTaskCount,
-            CreatedBy = sprint.CreatedBy,
-            CreatedByName = sprint.CreatedByUser?.UserName ?? string.Empty
+            CompletedTaskCount = completedTaskCount
         };
     }
 } 

@@ -19,11 +19,13 @@ public class GetProjectSprintsQueryHandler(ISprintRepository sprintRepository) :
             StartDate = sprint.StartDate,
             EndDate = sprint.EndDate,
             Status = sprint.Status,
+            Order = sprint.Order,
             Goals = sprint.Goals,
-            CreatedBy = sprint.CreatedBy,
-            CreatedByName = sprint.CreatedByUser?.UserName ?? string.Empty,
+            Deliverables = sprint.Deliverables,
             CreatedAt = sprint.CreatedAt,
-            UpdatedAt = sprint.UpdatedAt
+            UpdatedAt = sprint.UpdatedAt,
+            TaskCount = sprint.Tasks?.Count ?? 0,
+            CompletedTaskCount = sprint.Tasks?.Count(t => t.Status == Ediki.Domain.Enums.TaskStatus.Completed) ?? 0
         }).ToList();
     }
 } 

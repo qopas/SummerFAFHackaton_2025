@@ -24,9 +24,9 @@ public class UpdateSprintStatusCommandHandler(ISprintRepository sprintRepository
             StartDate = updatedSprint.StartDate,
             EndDate = updatedSprint.EndDate,
             Status = updatedSprint.Status,
+            Order = updatedSprint.Order,
             Goals = updatedSprint.Goals,
-            CreatedBy = updatedSprint.CreatedBy,
-            CreatedByName = updatedSprint.CreatedByUser?.UserName ?? string.Empty,
+            Deliverables = updatedSprint.Deliverables,
             CreatedAt = updatedSprint.CreatedAt,
             UpdatedAt = updatedSprint.UpdatedAt
         };
