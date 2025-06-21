@@ -3,6 +3,7 @@ using System;
 using Ediki.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ediki.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250621204209_grigoras_added_role_seed")]
+    partial class grigoras_added_role_seed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,7 +31,6 @@ namespace Ediki.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
@@ -39,26 +41,20 @@ namespace Ediki.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("text");
 
                     b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
-
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("ApplicationRole");
 
                     b.HasData(
                         new
                         {
                             Id = "admin-role-id",
-                            ConcurrencyStamp = "53bc29b4-8b78-44e3-8337-6b3dfa88dc99",
+                            ConcurrencyStamp = "62d09376-f851-4642-aaf5-9f715a61294b",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Administrator with full access",
                             Name = "Admin",
@@ -67,7 +63,7 @@ namespace Ediki.Infrastructure.Migrations
                         new
                         {
                             Id = "user-role-id",
-                            ConcurrencyStamp = "8c915a79-d638-4100-ba0b-aced9c321f95",
+                            ConcurrencyStamp = "ed131aaf-a8d8-4d09-855c-fbee6ecd1173",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Regular user with limited access",
                             Name = "User",
@@ -76,7 +72,7 @@ namespace Ediki.Infrastructure.Migrations
                         new
                         {
                             Id = "creator-role-id",
-                            ConcurrencyStamp = "3e459d1d-bfe4-4efa-8624-3689d04a07ae",
+                            ConcurrencyStamp = "75053007-c75d-477c-93a9-145c11c3e131",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Content creator with special permissions",
                             Name = "Creator",
@@ -398,6 +394,32 @@ namespace Ediki.Infrastructure.Migrations
                     b.ToTable("TeamMembers", (string)null);
                 });
 
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
@@ -627,7 +649,7 @@ namespace Ediki.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
-                    b.HasOne("Ediki.Domain.Entities.ApplicationRole", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -654,7 +676,7 @@ namespace Ediki.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
-                    b.HasOne("Ediki.Domain.Entities.ApplicationRole", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
