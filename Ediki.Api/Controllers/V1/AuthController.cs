@@ -12,12 +12,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace SummerFAFHackaton_2025.Controllers.V1;
 
 [Route("api/v1/[controller]")]
-public class AuthController : BaseApiController
+public class AuthController(IMediator mediator) : BaseApiController(mediator)
 {
-    public AuthController(IMediator mediator) : base(mediator)
-    {
-    }
-
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)

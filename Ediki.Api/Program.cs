@@ -39,9 +39,18 @@ builder.Services.AddSwaggerGen(c =>
 // Add Clean Architecture layers
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 var app = builder.Build();
 
+app.UseCors("AllowAll");
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -51,7 +60,6 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ediki API V1");
     });
 }
-
 app.UseHttpsRedirection();
 
 // Authentication & Authorization middleware
