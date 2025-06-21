@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ediki-postgres
+    environment:
+      POSTGRES_DB: EdikiDB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ediki-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  migrations:
+    build: 
+      context: .
+      dockerfile: Dockerfile.migrations
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    container_name: ediki-migrations
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=EdikiDB;Username=postgres;Password=postgres;Port=5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ediki-network
+    profiles:
+      - migrations
+
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    container_name: ediki-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=EdikiDB;Username=postgres;Password=postgres;Port=5432
+      - JWT__Secret=your-super-secret-jwt-key-that-is-at-least-32-characters-long-for-security
+      - JWT__ValidIssuer=http://localhost:8080
+      - JWT__ValidAudience=http://localhost:8080
+      - JWT__ExpirationHours=24
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ediki-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+
+networks:
+  ediki-network:
+    driver: bridge
