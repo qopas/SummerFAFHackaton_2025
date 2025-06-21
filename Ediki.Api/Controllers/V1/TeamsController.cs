@@ -25,14 +25,7 @@ public class TeamsController(IMediator mediator) : BaseApiController(mediator)
     public async Task<IActionResult> CreateTeam(string projectId, [FromBody] CreateTeamRequest request)
     {
         var requestWrapper = new CreateTeamRequestWrapper(request, projectId);
-        var result = await ExecuteAsync<CreateTeamCommand, TeamResponse, TeamDto>(requestWrapper);
-        
-        if (result is ObjectResult { StatusCode: 200 } objectResult)
-        {
-            return CreatedAtAction(nameof(GetTeamById), new { id = ((TeamResponse)objectResult.Value!).Id }, objectResult.Value);
-        }
-        
-        return result;
+        return await ExecuteAsync<CreateTeamCommand, TeamResponse, TeamDto>(requestWrapper);
     }
 
     [HttpGet("{id}")]

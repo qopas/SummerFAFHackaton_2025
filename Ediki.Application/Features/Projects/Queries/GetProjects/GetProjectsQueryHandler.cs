@@ -22,7 +22,7 @@ public class GetProjectsQueryHandler(
             difficulty: request.Difficulty,
             role: request.Role,
             isFeatured: request.IsFeatured,
-            includePrivate: request.IncludePrivate.Value,
+            includePrivate: request.IncludePrivate ?? false,
             userId: _currentUserService.UserId,
             page: request.Page,
             pageSize: request.PageSize);

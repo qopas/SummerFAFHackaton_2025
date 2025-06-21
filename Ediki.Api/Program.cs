@@ -1,16 +1,19 @@
 using Ediki.Application;
 using Ediki.Infrastructure;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Ediki API", Version = "v1" });
     
-    // Add JWT authentication to Swagger
     c.AddSecurityDefinition("Bearer", new()
     {
         Description = "JWT Authorization header using the Bearer scheme",
@@ -36,7 +39,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add Clean Architecture layers
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddCors(options =>
@@ -51,7 +53,6 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors("AllowAll");
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -62,7 +63,6 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 
-// Authentication & Authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
