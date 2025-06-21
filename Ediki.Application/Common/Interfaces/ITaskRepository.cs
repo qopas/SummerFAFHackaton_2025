@@ -1,15 +1,17 @@
+using Ediki.Domain.Entities;
 using Ediki.Domain.Enums;
 using TaskStatus = Ediki.Domain.Enums.TaskStatus;
+using DomainTask = Ediki.Domain.Entities.Task;
 
 namespace Ediki.Application.Common.Interfaces;
 
 public interface ITaskRepository
 {
-    Task<Domain.Entities.Task?> GetByIdAsync(string id);
-    Task<IEnumerable<Domain.Entities.Task>> GetBySprintIdAsync(string sprintId);
-    Task<IEnumerable<Domain.Entities.Task>> GetByProjectIdAsync(string projectId);
-    Task<IEnumerable<Domain.Entities.Task>> GetByAssigneeIdAsync(string assigneeId);
-    Task<IEnumerable<Domain.Entities.Task>> GetTasksWithFiltersAsync(
+    System.Threading.Tasks.Task<DomainTask?> GetByIdAsync(string id);
+    System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetBySprintIdAsync(string sprintId);
+    System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetByProjectIdAsync(string projectId);
+    System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetByAssigneeIdAsync(string assigneeId);
+    System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetTasksWithFiltersAsync(
         string? projectId = null,
         string? sprintId = null,
         string? assigneeId = null,
@@ -17,9 +19,9 @@ public interface ITaskRepository
         TaskPriority? priority = null,
         DateTime? dueDateFrom = null,
         DateTime? dueDateTo = null);
-    Task<Domain.Entities.Task> CreateAsync(Domain.Entities.Task task);
-    Task<Domain.Entities.Task> UpdateAsync(Domain.Entities.Task task);
-    Task<bool> DeleteAsync(string id);
-    Task<bool> ExistsAsync(string id);
-    Task<IEnumerable<Domain.Entities.Task>> GetUserTasksAsync(string userId);
+    System.Threading.Tasks.Task<DomainTask> CreateAsync(DomainTask task);
+    System.Threading.Tasks.Task<DomainTask> UpdateAsync(DomainTask task);
+    System.Threading.Tasks.Task<bool> DeleteAsync(string id);
+    System.Threading.Tasks.Task<bool> ExistsAsync(string id);
+    System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetUserTasksAsync(string userId);
 } 

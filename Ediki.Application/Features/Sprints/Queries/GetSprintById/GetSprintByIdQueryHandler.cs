@@ -6,18 +6,11 @@ using TaskStatus = Ediki.Domain.Enums.TaskStatus;
 
 namespace Ediki.Application.Features.Sprints.Queries.GetSprintById;
 
-public class GetSprintByIdQueryHandler : IRequestHandler<GetSprintByIdQuery, SprintDto?>
+public class GetSprintByIdQueryHandler(ISprintRepository sprintRepository) : IRequestHandler<GetSprintByIdQuery, SprintDto?>
 {
-    private readonly ISprintRepository _sprintRepository;
-
-    public GetSprintByIdQueryHandler(ISprintRepository sprintRepository)
+    public async System.Threading.Tasks.Task<SprintDto?> Handle(GetSprintByIdQuery request, CancellationToken cancellationToken)
     {
-        _sprintRepository = sprintRepository;
-    }
-
-    public async Task<SprintDto?> Handle(GetSprintByIdQuery request, CancellationToken cancellationToken)
-    {
-        var sprint = await _sprintRepository.GetByIdAsync(request.Id);
+        var sprint = await sprintRepository.GetByIdAsync(request.Id);
         if (sprint == null)
             return null;
 
@@ -39,7 +32,9 @@ public class GetSprintByIdQueryHandler : IRequestHandler<GetSprintByIdQuery, Spr
             CreatedAt = sprint.CreatedAt,
             UpdatedAt = sprint.UpdatedAt,
             TaskCount = taskCount,
-            CompletedTaskCount = completedTaskCount
+            CompletedTaskCount = completedTaskCount,
+            CreatedBy = sprint.CreatedBy,
+            CreatedByName = sprint.CreatedByUser?.UserName ?? string.Empty
         };
     }
 } 

@@ -3,14 +3,14 @@ using Ediki.Domain.Entities;
 using Ediki.Domain.Enums;
 using Ediki.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Task = Ediki.Domain.Entities.Task;
+using DomainTask = Ediki.Domain.Entities.Task;
 using TaskStatus = Ediki.Domain.Enums.TaskStatus;
 
 namespace Ediki.Infrastructure.Repositories;
 
 public class TaskRepository(ApplicationDbContext context) : ITaskRepository
 {
-    public async Task<Domain.Entities.Task?> GetByIdAsync(string id)
+    public async System.Threading.Tasks.Task<DomainTask?> GetByIdAsync(string id)
     {
         return await context.Tasks
             .Include(t => t.Assignee)
@@ -20,7 +20,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
-    public async Task<IEnumerable<Domain.Entities.Task>> GetBySprintIdAsync(string sprintId)
+    public async System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetBySprintIdAsync(string sprintId)
     {
         return await context.Tasks
             .Where(t => t.SprintId == sprintId)
@@ -30,7 +30,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Domain.Entities.Task>> GetByProjectIdAsync(string projectId)
+    public async System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetByProjectIdAsync(string projectId)
     {
         return await context.Tasks
             .Where(t => t.ProjectId == projectId)
@@ -41,7 +41,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Domain.Entities.Task>> GetByAssigneeIdAsync(string assigneeId)
+    public async System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetByAssigneeIdAsync(string assigneeId)
     {
         return await context.Tasks
             .Where(t => t.AssigneeId == assigneeId)
@@ -53,7 +53,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Task>> GetTasksWithFiltersAsync(string? projectId = null, string? sprintId = null, string? assigneeId = null,
+    public async System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetTasksWithFiltersAsync(string? projectId = null, string? sprintId = null, string? assigneeId = null,
         TaskStatus? status = null, TaskPriority? priority = null, DateTime? dueDateFrom = null, DateTime? dueDateTo = null)
     {
         var query = context.Tasks
@@ -73,7 +73,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
             query = query.Where(t => t.AssigneeId == assigneeId);
 
         if (status.HasValue)
-            query = query.Where(t => t.Status == (TaskStatus)status.Value);
+            query = query.Where(t => t.Status == status.Value);
 
         if (priority.HasValue)
             query = query.Where(t => t.Priority == priority.Value);
@@ -88,14 +88,14 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
     }
     
     
-    public async Task<Domain.Entities.Task> CreateAsync(Domain.Entities.Task task)
+    public async System.Threading.Tasks.Task<DomainTask> CreateAsync(DomainTask task)
     {
         context.Tasks.Add(task);
         await context.SaveChangesAsync();
         return task;
     }
 
-    public async Task<Domain.Entities.Task> UpdateAsync(Domain.Entities.Task task)
+    public async System.Threading.Tasks.Task<DomainTask> UpdateAsync(DomainTask task)
     {
         task.UpdatedAt = DateTime.UtcNow;
         
@@ -109,7 +109,7 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         return task;
     }
 
-    public async Task<bool> DeleteAsync(string id)
+    public async System.Threading.Tasks.Task<bool> DeleteAsync(string id)
     {
         var task = await context.Tasks.FindAsync(id);
         if (task == null)
@@ -120,12 +120,12 @@ public class TaskRepository(ApplicationDbContext context) : ITaskRepository
         return true;
     }
 
-    public async Task<bool> ExistsAsync(string id)
+    public async System.Threading.Tasks.Task<bool> ExistsAsync(string id)
     {
         return await context.Tasks.AnyAsync(t => t.Id == id);
     }
 
-    public async Task<IEnumerable<Domain.Entities.Task>> GetUserTasksAsync(string userId)
+    public async System.Threading.Tasks.Task<IEnumerable<DomainTask>> GetUserTasksAsync(string userId)
     {
         return await context.Tasks
             .Where(t => t.AssigneeId == userId || t.CreatedBy == userId)
