@@ -1,5 +1,6 @@
 ﻿using Ediki.Domain.Entities;
 using System.Linq.Expressions;
+using Task = System.Threading.Tasks.Task;
 
 namespace Ediki.Domain.Interfaces;
 

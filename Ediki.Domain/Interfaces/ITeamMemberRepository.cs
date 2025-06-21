@@ -1,5 +1,6 @@
 using Ediki.Domain.Entities;
 using Ediki.Domain.Enums;
+using Task = System.Threading.Tasks.Task;
 
 namespace Ediki.Domain.Interfaces;
 

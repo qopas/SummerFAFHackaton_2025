@@ -3,19 +3,15 @@ using Ediki.Domain.Entities;
 using Ediki.Domain.Interfaces;
 using Ediki.Infrastructure.Data;
 using System.Linq.Expressions;
+using Task = System.Threading.Tasks.Task;
 
 namespace Ediki.Infrastructure.Repositories;
 
-public class Repository<T> : IRepository<T> where T : BaseEntity
+public class Repository<T>(ApplicationDbContext context) : IRepository<T>
+    where T : BaseEntity
 {
-    protected readonly ApplicationDbContext _context;
-    protected readonly DbSet<T> _dbSet;
-
-    public Repository(ApplicationDbContext context)
-    {
-        _context = context;
-        _dbSet = context.Set<T>();
-    }
+    protected readonly ApplicationDbContext _context = context;
+    protected readonly DbSet<T> _dbSet = context.Set<T>();
 
     public async Task<T?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {

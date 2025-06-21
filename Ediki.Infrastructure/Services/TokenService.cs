@@ -6,6 +6,7 @@ using Ediki.Application.Interfaces;
 using Ediki.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Task = System.Threading.Tasks.Task;
 
 namespace Ediki.Infrastructure.Services;
 

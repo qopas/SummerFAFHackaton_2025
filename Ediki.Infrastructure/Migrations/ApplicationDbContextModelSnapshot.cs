@@ -58,7 +58,7 @@ namespace Ediki.Infrastructure.Migrations
                         new
                         {
                             Id = "admin-role-id",
-                            ConcurrencyStamp = "8f434346-85c4-4c5b-b7e8-4c5e8b7f9d1c",
+                            ConcurrencyStamp = "9122b3b8-3e41-4872-8b4b-e2e1e102713f",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Administrator with full access",
                             Name = "Admin",
@@ -67,7 +67,7 @@ namespace Ediki.Infrastructure.Migrations
                         new
                         {
                             Id = "user-role-id",
-                            ConcurrencyStamp = "7d532240-74c3-3b4a-a6f7-3b4e7c8f0e2d",
+                            ConcurrencyStamp = "99eaa8c5-5d6a-4dc7-9d3a-2db3b80984f2",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Regular user with limited access",
                             Name = "User",
@@ -76,7 +76,7 @@ namespace Ediki.Infrastructure.Migrations
                         new
                         {
                             Id = "creator-role-id",
-                            ConcurrencyStamp = "6c421130-63b2-2a39-95e6-2a3d6b7e9c1f",
+                            ConcurrencyStamp = "96de642f-6de1-4189-a014-2967a70a4466",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Content creator with special permissions",
                             Name = "Creator",
@@ -276,6 +276,148 @@ namespace Ediki.Infrastructure.Migrations
                     b.HasIndex("CreatedById");
 
                     b.ToTable("Projects", (string)null);
+                });
+
+            modelBuilder.Entity("Ediki.Domain.Entities.Sprint", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Deliverables")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Goals")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProjectId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ProjectId", "Order");
+
+                    b.ToTable("Sprints");
+                });
+
+            modelBuilder.Entity("Ediki.Domain.Entities.Task", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<float?>("ActualHours")
+                        .HasColumnType("real");
+
+                    b.Property<string>("AssigneeId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("Dependencies")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<float?>("EstimatedHours")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProjectId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<string>("SprintId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssigneeId");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DueDate");
+
+                    b.HasIndex("Priority");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("SprintId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("Ediki.Domain.Entities.Team", b =>
@@ -591,6 +733,51 @@ namespace Ediki.Infrastructure.Migrations
                     b.Navigation("Rewards");
                 });
 
+            modelBuilder.Entity("Ediki.Domain.Entities.Sprint", b =>
+                {
+                    b.HasOne("Ediki.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Ediki.Domain.Entities.Task", b =>
+                {
+                    b.HasOne("Ediki.Domain.Entities.ApplicationUser", "Assignee")
+                        .WithMany()
+                        .HasForeignKey("AssigneeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Ediki.Domain.Entities.ApplicationUser", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Ediki.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Ediki.Domain.Entities.Sprint", "Sprint")
+                        .WithMany("Tasks")
+                        .HasForeignKey("SprintId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Assignee");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Sprint");
+                });
+
             modelBuilder.Entity("Ediki.Domain.Entities.Team", b =>
                 {
                     b.HasOne("Ediki.Domain.Entities.Project", null)
@@ -674,6 +861,11 @@ namespace Ediki.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Ediki.Domain.Entities.Sprint", b =>
+                {
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }
