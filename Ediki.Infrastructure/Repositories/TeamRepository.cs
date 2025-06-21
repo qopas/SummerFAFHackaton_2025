@@ -2,33 +2,27 @@ using Ediki.Domain.Entities;
 using Ediki.Domain.Interfaces;
 using Ediki.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Task = System.Threading.Tasks.Task;
 
 namespace Ediki.Infrastructure.Repositories;
 
-public class TeamRepository : ITeamRepository
+public class TeamRepository(ApplicationDbContext dbContext) : ITeamRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public TeamRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<Team?> GetByIdAsync(string id)
     {
-        return await _dbContext.Teams
+        return await dbContext.Teams
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
     public async Task<Team?> GetByProjectIdAsync(string projectId)
     {
-        return await _dbContext.Teams
+        return await dbContext.Teams
             .FirstOrDefaultAsync(t => t.ProjectId == projectId);
     }
 
     public async Task<Team?> GetByInviteCodeAsync(string inviteCode)
     {
-        return await _dbContext.Teams
+        return await dbContext.Teams
             .FirstOrDefaultAsync(t => t.InviteCode == inviteCode);
     }
 
@@ -40,7 +34,7 @@ public class TeamRepository : ITeamRepository
         int page = 1,
         int pageSize = 10)
     {
-        var query = _dbContext.Teams.AsQueryable();
+        var query = dbContext.Teams.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -57,7 +51,7 @@ public class TeamRepository : ITeamRepository
         if (!string.IsNullOrWhiteSpace(userId))
         {
             query = query.Where(t => t.TeamLead == userId ||
-                _dbContext.TeamMembers.Any(tm => tm.TeamId == t.Id && tm.UserId == userId && tm.IsActive));
+                dbContext.TeamMembers.Any(tm => tm.TeamId == t.Id && tm.UserId == userId && tm.IsActive));
         }
 
         return await query
@@ -70,43 +64,43 @@ public class TeamRepository : ITeamRepository
     public async Task<Team> AddAsync(Team team)
     {
         team.CreatedAt = DateTime.UtcNow;
-        await _dbContext.Teams.AddAsync(team);
-        await _dbContext.SaveChangesAsync();
+        await dbContext.Teams.AddAsync(team);
+        await dbContext.SaveChangesAsync();
         return team;
     }
 
     public async Task UpdateAsync(Team team)
     {
         team.UpdatedAt = DateTime.UtcNow;
-        _dbContext.Entry(team).State = EntityState.Modified;
-        await _dbContext.SaveChangesAsync();
+        dbContext.Entry(team).State = EntityState.Modified;
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(Team team)
     {
-        _dbContext.Teams.Remove(team);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Teams.Remove(team);
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task<bool> ExistsAsync(string id)
     {
-        return await _dbContext.Teams.AnyAsync(t => t.Id == id);
+        return await dbContext.Teams.AnyAsync(t => t.Id == id);
     }
 
     public async Task<bool> ExistsByProjectIdAsync(string projectId)
     {
-        return await _dbContext.Teams.AnyAsync(t => t.ProjectId == projectId);
+        return await dbContext.Teams.AnyAsync(t => t.ProjectId == projectId);
     }
 
     public async Task<bool> IsTeamLeadAsync(string teamId, string userId)
     {
-        return await _dbContext.Teams
+        return await dbContext.Teams
             .AnyAsync(t => t.Id == teamId && t.TeamLead == userId);
     }
 
     public async Task<int> GetMemberCountAsync(string teamId)
     {
-        return await _dbContext.TeamMembers
+        return await dbContext.TeamMembers
             .CountAsync(tm => tm.TeamId == teamId && tm.IsActive);
     }
 }

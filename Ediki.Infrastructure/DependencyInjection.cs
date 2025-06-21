@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Ediki.Application.Interfaces;
+using Ediki.Application.Common.Interfaces;
 using Ediki.Domain.Entities;
 using Ediki.Domain.Interfaces;
 using Ediki.Infrastructure.Data;
@@ -68,6 +69,8 @@ public static class DependencyInjection
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<ITeamRepository, TeamRepository>();
         services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
+        services.AddScoped<ISprintRepository, SprintRepository>();
+        services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddHttpContextAccessor();
