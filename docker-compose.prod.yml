@@ -20,13 +20,9 @@ services:
       timeout: 10s
       retries: 3
 
+  # Service for running database migrations
   migrations:
-    build: 
-      context: .
-      dockerfile: Dockerfile.migrations
-      platforms:
-        - linux/amd64
-        - linux/arm64
+    image: your-dockerhub-username/ediki-api-migrations:latest
     container_name: ediki-migrations
     environment:
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=EdikiDB;Username=postgres;Password=postgres;Port=5432
@@ -39,12 +35,7 @@ services:
       - migrations
 
   api:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-      platforms:
-        - linux/amd64
-        - linux/arm64
+    image: your-dockerhub-username/ediki-api:latest
     container_name: ediki-api
     ports:
       - "8080:8080"
@@ -59,6 +50,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     networks:
       - ediki-network
     restart: unless-stopped
@@ -73,4 +66,4 @@ volumes:
 
 networks:
   ediki-network:
-    driver: bridge
+    driver: bridge 
