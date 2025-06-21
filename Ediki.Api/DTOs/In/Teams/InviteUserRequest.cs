@@ -1,7 +1,7 @@
 using Ediki.Api.DTOs.In;
 using Ediki.Application.Features.Teams.Commands.InviteUser;
 
-namespace Ediki.Api.DTOs.In.Teams;
+namespace SummerFAFHackaton_2025.DTOs.In.Teams;
 
 public class InviteUserRequest : IRequestIn<InviteUserCommand>
 {

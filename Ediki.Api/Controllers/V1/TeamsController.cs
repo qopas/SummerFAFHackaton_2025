@@ -1,5 +1,4 @@
 using Ediki.Api.DTOs.In;
-using Ediki.Api.DTOs.In.Teams;
 using Ediki.Api.DTOs.Out.Teams;
 using Ediki.Application.Features.Teams.Commands.CreateTeam;
 using Ediki.Application.Features.Teams.Commands.InviteUser;
