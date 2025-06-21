@@ -1,0 +1,39 @@
+# Dockerfile for running database migrations
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG TARGETARCH
+WORKDIR /app
+
+# Install Entity Framework CLI tool
+RUN dotnet tool install --global dotnet-ef --version 9.0.0
+ENV PATH="$PATH:/root/.dotnet/tools"
+
+# Copy solution file and project files
+COPY *.sln ./
+COPY Ediki.Api/*.csproj ./Ediki.Api/
+COPY Ediki.Application/*.csproj ./Ediki.Application/
+COPY Ediki.Domain/*.csproj ./Ediki.Domain/
+COPY Ediki.Infrastructure/*.csproj ./Ediki.Infrastructure/
+COPY Ediki.Tests.Unit/*.csproj ./Ediki.Tests.Unit/
+COPY Ediki.Tests.Integration/*.csproj ./Ediki.Tests.Integration/
+
+# Restore dependencies
+RUN dotnet restore -a $TARGETARCH
+
+# Copy the entire source code
+COPY . ./
+
+# Build the application
+RUN dotnet build Ediki.Api/Ediki.Api.csproj -a $TARGETARCH -c Release --no-restore
+
+# Create migration script
+RUN echo '#!/bin/sh' > /app/migrate.sh && \
+    echo 'echo "Running database migrations..."' >> /app/migrate.sh && \
+    echo 'dotnet ef database update --project Ediki.Infrastructure --startup-project Ediki.Api --verbose' >> /app/migrate.sh && \
+    echo 'echo "Migrations completed successfully!"' >> /app/migrate.sh && \
+    chmod +x /app/migrate.sh
+
+# Set working directory
+WORKDIR /app
+
+# Default command
+CMD ["/app/migrate.sh"] 

@@ -25,7 +25,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 NormalizedName = "ADMIN",
                 Description = "Administrator with full access",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                ConcurrencyStamp = Guid.NewGuid().ToString()
+                ConcurrencyStamp = "8f434346-85c4-4c5b-b7e8-4c5e8b7f9d1c"
             },
             new ApplicationRole
             {
@@ -34,7 +34,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 NormalizedName = "USER",
                 Description = "Regular user with limited access",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                ConcurrencyStamp = Guid.NewGuid().ToString()
+                ConcurrencyStamp = "7d532240-74c3-3b4a-a6f7-3b4e7c8f0e2d"
             },
             new ApplicationRole
             {
@@ -43,7 +43,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 NormalizedName = "CREATOR",
                 Description = "Content creator with special permissions",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                ConcurrencyStamp = Guid.NewGuid().ToString()
+                ConcurrencyStamp = "6c421130-63b2-2a39-95e6-2a3d6b7e9c1f"
             }
         );
     }

@@ -34,25 +34,11 @@ public class ProjectRepository : IProjectRepository
     {
         var query = _dbContext.Projects.AsQueryable();
         
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            var searchTermLower = searchTerm.ToLower();
-            query = query.Where(p =>
-                p.Title.ToLower().Contains(searchTermLower) ||
-                p.Description.ToLower().Contains(searchTermLower) ||
-                p.ShortDescription.ToLower().Contains(searchTermLower) ||
-                p.Tags.Any(t => t.ToLower().Contains(searchTermLower))
-            );
-        }
-            
         if (status.HasValue)
             query = query.Where(p => p.Status == status.Value);
             
         if (difficulty.HasValue)
             query = query.Where(p => p.Difficulty == difficulty.Value);
-            
-        if (role.HasValue)
-            query = query.Where(p => p.RolesNeeded.Contains(role.Value));
             
         if (isFeatured.HasValue)
             query = query.Where(p => p.IsFeatured == isFeatured.Value);
@@ -65,11 +51,34 @@ public class ProjectRepository : IProjectRepository
                 : query.Where(p => p.IsPublic);
         }
 
-        return await query
+        // Execute the query first, then filter complex properties in memory
+        var projects = await query
             .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        // Apply search term filtering in memory to avoid EF translation issues
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var searchTermLower = searchTerm.ToLower();
+            projects = projects.Where(p =>
+                p.Title.ToLower().Contains(searchTermLower) ||
+                p.Description.ToLower().Contains(searchTermLower) ||
+                p.ShortDescription.ToLower().Contains(searchTermLower) ||
+                p.Tags.Any(t => t.ToLower().Contains(searchTermLower))
+            ).ToList();
+        }
+
+        // Filter by role in memory since EF can't translate the Contains for converted properties
+        if (role.HasValue)
+        {
+            projects = projects.Where(p => p.RolesNeeded.Contains(role.Value)).ToList();
+        }
+
+        // Apply pagination after filtering
+        return projects
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<Project> AddAsync(Project project)
