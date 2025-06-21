@@ -1,23 +1,25 @@
 using Ediki.Application.Common.Interfaces;
+using Ediki.Domain.Common;
 using MediatR;
 
 namespace Ediki.Application.Features.Tasks.Commands.DeleteTask;
 
-public class DeleteTaskCommandHandler : IRequestHandler<DeleteTaskCommand, bool>
+public class DeleteTaskCommandHandler(ITaskRepository taskRepository) : IRequestHandler<DeleteTaskCommand, Result<bool>>
 {
-    private readonly ITaskRepository _taskRepository;
-
-    public DeleteTaskCommandHandler(ITaskRepository taskRepository)
+    public async System.Threading.Tasks.Task<Result<bool>> Handle(DeleteTaskCommand request, CancellationToken cancellationToken)
     {
-        _taskRepository = taskRepository;
-    }
+        try
+        {
+            var exists = await taskRepository.ExistsAsync(request.Id);
+            if (!exists)
+                return Result<bool>.Success(false);
 
-    public async System.Threading.Tasks.Task<bool> Handle(DeleteTaskCommand request, CancellationToken cancellationToken)
-    {
-        var exists = await _taskRepository.ExistsAsync(request.Id);
-        if (!exists)
-            return false;
-
-        return await _taskRepository.DeleteAsync(request.Id);
+            var result = await taskRepository.DeleteAsync(request.Id);
+            return Result<bool>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            return Result<bool>.Failure(ex.Message);
+        }
     }
 } 

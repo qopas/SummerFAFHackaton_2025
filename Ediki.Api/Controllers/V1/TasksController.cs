@@ -1,3 +1,4 @@
+using Ediki.Api.DTOs.Out.Tasks;
 using Ediki.Application.Features.Tasks.Commands.AssignTask;
 using Ediki.Application.Features.Tasks.Commands.CreateTask;
 using Ediki.Application.Features.Tasks.Commands.DeleteTask;
@@ -9,28 +10,22 @@ using Ediki.Application.Features.Tasks.Queries.GetUserTasks;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SummerFAFHackaton_2025.Controllers;
 
 namespace Ediki.Api.Controllers.V1;
 
 [Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
-public class TasksController(IMediator mediator) : ControllerBase
+public class TasksController(IMediator mediator) : BaseApiController(mediator)
 {
-    private readonly IMediator _mediator = mediator;
-
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(TaskDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTaskById(string id)
     {
         var query = new GetTaskByIdQuery { Id = id };
-        var result = await _mediator.Send(query);
-        
-        if (result == null)
-            return NotFound($"Task with ID {id} not found.");
-            
-        return Ok(result);
+        return await ExecuteQueryAsync<TaskResponse, TaskDto?>(query);
     }
 
     [HttpGet("user/{userId}")]
@@ -38,8 +33,7 @@ public class TasksController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetUserTasks(string userId)
     {
         var query = new GetUserTasksQuery { UserId = userId };
-        var result = await _mediator.Send(query);
-        return Ok(result);
+        return await ExecuteListQueryAsync<TaskResponse, TaskDto>(query);
     }
 
     [HttpPost]
@@ -47,15 +41,14 @@ public class TasksController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTask([FromBody] CreateTaskCommand command)
     {
-        try
+        var result = await _mediator.Send(command);
+        
+        if (!result.IsSuccess)
         {
-            var result = await _mediator.Send(command);
-            return CreatedAtAction(nameof(GetTaskById), new { id = result.Id }, result);
+            return BadRequest(new { message = result.Error, errors = result.Errors });
         }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+
+        return CreatedAtAction(nameof(GetTaskById), new { id = result.Value.Id }, result.Value);
     }
 
     [HttpPut("{id}")]
@@ -67,19 +60,14 @@ public class TasksController(IMediator mediator) : ControllerBase
         if (id != command.Id)
             return BadRequest("ID mismatch");
 
-        try
+        var result = await _mediator.Send(command);
+        
+        if (!result.IsSuccess)
         {
-            var result = await _mediator.Send(command);
-            return Ok(result);
+            return BadRequest(new { message = result.Error, errors = result.Errors });
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+
+        return Ok(result.Value);
     }
 
     [HttpPatch("{id}/assign")]
@@ -91,19 +79,14 @@ public class TasksController(IMediator mediator) : ControllerBase
         if (id != command.TaskId)
             return BadRequest("ID mismatch");
 
-        try
+        var result = await _mediator.Send(command);
+        
+        if (!result.IsSuccess)
         {
-            var result = await _mediator.Send(command);
-            return Ok(result);
+            return BadRequest(new { message = result.Error, errors = result.Errors });
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+
+        return Ok(result.Value);
     }
 
     [HttpPatch("{id}/status")]
@@ -115,19 +98,14 @@ public class TasksController(IMediator mediator) : ControllerBase
         if (id != command.TaskId)
             return BadRequest("ID mismatch");
 
-        try
+        var result = await _mediator.Send(command);
+        
+        if (!result.IsSuccess)
         {
-            var result = await _mediator.Send(command);
-            return Ok(result);
+            return BadRequest(new { message = result.Error, errors = result.Errors });
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+
+        return Ok(result.Value);
     }
 
     [HttpDelete("{id}")]
@@ -138,7 +116,12 @@ public class TasksController(IMediator mediator) : ControllerBase
         var command = new DeleteTaskCommand { Id = id };
         var result = await _mediator.Send(command);
         
-        if (!result)
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { message = result.Error, errors = result.Errors });
+        }
+        
+        if (!result.Value)
             return NotFound($"Task with ID {id} not found.");
             
         return NoContent();

@@ -1,3 +1,4 @@
+using Ediki.Api.DTOs.Out.Sprints;
 using Ediki.Application.Features.Sprints.Commands.CreateSprint;
 using Ediki.Application.Features.Sprints.Commands.DeleteSprint;
 using Ediki.Application.Features.Sprints.Commands.UpdateSprint;
@@ -8,28 +9,22 @@ using Ediki.Application.Features.Sprints.Queries.GetSprintById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SummerFAFHackaton_2025.Controllers;
 
 namespace Ediki.Api.Controllers.V1;
 
 [Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
-public class SprintsController(IMediator mediator) : ControllerBase
+public class SprintsController(IMediator mediator) : BaseApiController(mediator)
 {
-    private readonly IMediator _mediator = mediator;
-
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(SprintDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetSprintById(string id)
     {
         var query = new GetSprintByIdQuery { Id = id };
-        var result = await _mediator.Send(query);
-        
-        if (result == null)
-            return NotFound($"Sprint with ID {id} not found.");
-            
-        return Ok(result);
+        return await ExecuteQueryAsync<SprintResponse, SprintDto?>(query);
     }
 
     [HttpGet("project/{projectId}")]
@@ -37,8 +32,7 @@ public class SprintsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetProjectSprints(string projectId)
     {
         var query = new GetProjectSprintsQuery { ProjectId = projectId };
-        var result = await _mediator.Send(query);
-        return Ok(result);
+        return await ExecuteListQueryAsync<SprintResponse, SprintDto>(query);
     }
 
     [HttpPost]
@@ -46,15 +40,14 @@ public class SprintsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateSprint([FromBody] CreateSprintCommand command)
     {
-        try
+        var result = await _mediator.Send(command);
+        
+        if (!result.IsSuccess)
         {
-            var result = await _mediator.Send(command);
-            return CreatedAtAction(nameof(GetSprintById), new { id = result.Id }, result);
+            return BadRequest(new { message = result.Error, errors = result.Errors });
         }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+
+        return CreatedAtAction(nameof(GetSprintById), new { id = result.Value.Id }, result.Value);
     }
 
     [HttpPut("{id}")]
@@ -66,19 +59,14 @@ public class SprintsController(IMediator mediator) : ControllerBase
         if (id != command.Id)
             return BadRequest("ID mismatch");
 
-        try
+        var result = await _mediator.Send(command);
+        
+        if (!result.IsSuccess)
         {
-            var result = await _mediator.Send(command);
-            return Ok(result);
+            return BadRequest(new { message = result.Error, errors = result.Errors });
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+
+        return Ok(result.Value);
     }
 
     [HttpPatch("{id}/status")]
@@ -90,19 +78,14 @@ public class SprintsController(IMediator mediator) : ControllerBase
         if (id != command.SprintId)
             return BadRequest("ID mismatch");
 
-        try
+        var result = await _mediator.Send(command);
+        
+        if (!result.IsSuccess)
         {
-            var result = await _mediator.Send(command);
-            return Ok(result);
+            return BadRequest(new { message = result.Error, errors = result.Errors });
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+
+        return Ok(result.Value);
     }
 
     [HttpDelete("{id}")]
@@ -113,7 +96,12 @@ public class SprintsController(IMediator mediator) : ControllerBase
         var command = new DeleteSprintCommand { Id = id };
         var result = await _mediator.Send(command);
         
-        if (!result)
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { message = result.Error, errors = result.Errors });
+        }
+        
+        if (!result.Value)
             return NotFound($"Sprint with ID {id} not found.");
             
         return NoContent();

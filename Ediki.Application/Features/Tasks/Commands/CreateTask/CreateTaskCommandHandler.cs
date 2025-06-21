@@ -1,70 +1,64 @@
 using Ediki.Application.Common.Interfaces;
 using Ediki.Application.Features.Tasks.DTOs;
-using Ediki.Application.Interfaces;
+using Ediki.Domain.Common;
 using MediatR;
+using DomainTask = Ediki.Domain.Entities.Task;
 
 namespace Ediki.Application.Features.Tasks.Commands.CreateTask;
 
-public class CreateTaskCommandHandler : IRequestHandler<CreateTaskCommand, TaskDto>
+public class CreateTaskCommandHandler(ITaskRepository taskRepository) : IRequestHandler<CreateTaskCommand, Result<TaskDto>>
 {
-    private readonly ITaskRepository _taskRepository;
-    private readonly ICurrentUserService _currentUserService;
-
-    public CreateTaskCommandHandler(ITaskRepository taskRepository, ICurrentUserService currentUserService)
+    public async System.Threading.Tasks.Task<Result<TaskDto>> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
     {
-        _taskRepository = taskRepository;
-        _currentUserService = currentUserService;
-    }
-
-    public async Task<TaskDto> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
-    {
-        var currentUserId = _currentUserService.UserId;
-        if (string.IsNullOrEmpty(currentUserId))
-            throw new UnauthorizedAccessException("User not authenticated.");
-
-        var task = new Domain.Entities.Task
+        try
         {
-            SprintId = request.SprintId,
-            ProjectId = request.ProjectId,
-            Title = request.Title,
-            Description = request.Description,
-            AssigneeId = request.AssigneeId,
-            Status = request.Status,
-            Priority = request.Priority,
-            EstimatedHours = request.EstimatedHours,
-            Tags = request.Tags,
-            Dependencies = request.Dependencies,
-            DueDate = request.DueDate,
-            CreatedBy = currentUserId
-        };
+            var task = new DomainTask
+            {
+                SprintId = request.SprintId,
+                ProjectId = request.ProjectId,
+                Title = request.Title,
+                Description = request.Description,
+                AssigneeId = request.AssigneeId,
+                Status = request.Status,
+                Priority = request.Priority,
+                EstimatedHours = request.EstimatedHours,
+                Tags = request.Tags,
+                Dependencies = request.Dependencies,
+                DueDate = request.DueDate,
+                CreatedBy = request.CreatedBy
+            };
 
-        var createdTask = await _taskRepository.CreateAsync(task);
+            var createdTask = await taskRepository.CreateAsync(task);
 
-        // Load the created task with navigation properties
-        var taskWithDetails = await _taskRepository.GetByIdAsync(createdTask.Id);
+            var taskDto = new TaskDto
+            {
+                Id = createdTask.Id,
+                SprintId = createdTask.SprintId,
+                ProjectId = createdTask.ProjectId,
+                Title = createdTask.Title,
+                Description = createdTask.Description,
+                AssigneeId = createdTask.AssigneeId,
+                AssigneeName = createdTask.Assignee?.UserName ?? string.Empty,
+                AssigneeEmail = createdTask.Assignee?.Email ?? string.Empty,
+                Status = createdTask.Status,
+                Priority = createdTask.Priority,
+                EstimatedHours = createdTask.EstimatedHours,
+                ActualHours = createdTask.ActualHours,
+                Tags = createdTask.Tags,
+                Dependencies = createdTask.Dependencies,
+                DueDate = createdTask.DueDate,
+                CompletedAt = createdTask.CompletedAt,
+                CreatedBy = createdTask.CreatedBy,
+                CreatedByName = createdTask.CreatedByUser?.UserName ?? string.Empty,
+                CreatedAt = createdTask.CreatedAt,
+                UpdatedAt = createdTask.UpdatedAt
+            };
 
-        return new TaskDto
+            return Result<TaskDto>.Success(taskDto);
+        }
+        catch (Exception ex)
         {
-            Id = taskWithDetails!.Id,
-            SprintId = taskWithDetails.SprintId,
-            ProjectId = taskWithDetails.ProjectId,
-            Title = taskWithDetails.Title,
-            Description = taskWithDetails.Description,
-            AssigneeId = taskWithDetails.AssigneeId,
-            AssigneeName = taskWithDetails.Assignee?.UserName,
-            AssigneeEmail = taskWithDetails.Assignee?.Email,
-            Status = taskWithDetails.Status,
-            Priority = taskWithDetails.Priority,
-            EstimatedHours = taskWithDetails.EstimatedHours,
-            ActualHours = taskWithDetails.ActualHours,
-            Tags = taskWithDetails.Tags,
-            Dependencies = taskWithDetails.Dependencies,
-            DueDate = taskWithDetails.DueDate,
-            CompletedAt = taskWithDetails.CompletedAt,
-            CreatedBy = taskWithDetails.CreatedBy,
-            CreatedByName = taskWithDetails.CreatedByUser?.UserName ?? string.Empty,
-            CreatedAt = taskWithDetails.CreatedAt,
-            UpdatedAt = taskWithDetails.UpdatedAt
-        };
+            return Result<TaskDto>.Failure(ex.Message);
+        }
     }
 } 

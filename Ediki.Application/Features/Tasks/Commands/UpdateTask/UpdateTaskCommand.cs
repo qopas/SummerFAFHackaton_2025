@@ -1,11 +1,12 @@
 using Ediki.Application.Features.Tasks.DTOs;
+using Ediki.Domain.Common;
 using Ediki.Domain.Enums;
 using MediatR;
 using TaskStatus = Ediki.Domain.Enums.TaskStatus;
 
 namespace Ediki.Application.Features.Tasks.Commands.UpdateTask;
 
-public class UpdateTaskCommand : IRequest<TaskDto>
+public class UpdateTaskCommand : IRequest<Result<TaskDto>>
 {
     public string Id { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
