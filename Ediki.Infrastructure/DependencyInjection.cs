@@ -64,11 +64,11 @@ public static class DependencyInjection
         });
 
         // Repositories
-        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<ITeamRepository, TeamRepository>();
         services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
+        services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
         services.AddScoped<ISprintRepository, SprintRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

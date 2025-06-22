@@ -2,6 +2,7 @@
 using Ediki.Api.DTOs.In.Auth;
 using Ediki.Api.DTOs.Out.Auth;
 using Ediki.Application.Commands.Auth.Login;
+using Ediki.Application.Commands.Auth.UpdateProfile;
 using Ediki.Application.DTOs.Auth;
 using Ediki.Application.Queries.Auth.GetAllUsers;
 using Ediki.Application.Queries.Auth.GetUserById;
@@ -18,14 +19,90 @@ public class AuthController(IMediator mediator) : BaseApiController(mediator)
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        return await ExecuteAsync<LoginCommand, LoginResponse, LoginResult>(request);
+        try
+        {
+            // Проверяем, что request не null и содержит данные
+            if (request == null)
+            {
+                return BadRequest(new { 
+                    success = false,
+                    message = "Request body is null",
+                    errors = new[] { "Invalid request data" }
+                });
+            }
+
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+            {
+                return BadRequest(new { 
+                    success = false,
+                    message = "Email and password are required",
+                    errors = new[] { "Email and password fields cannot be empty" }
+                });
+            }
+
+            var command = request.Convert();
+            var result = await _mediator.Send(command);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { 
+                    success = false,
+                    message = result.Error,
+                    errors = result.Errors 
+                });
+            }
+
+            var response = new LoginResponse();
+            return Ok(new { 
+                success = true,
+                data = response.Convert(result.Value),
+                message = "Login successful" 
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { 
+                success = false,
+                message = "An error occurred during login",
+                errors = new[] { ex.Message },
+                stackTrace = ex.StackTrace 
+            });
+        }
     }
 
     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        return await ExecuteAsync<Ediki.Application.Commands.Auth.Register.RegisterCommand, RegisterResponse, Ediki.Application.DTOs.Auth.RegisterResult>(request);
+        try
+        {
+            var command = request.Convert();
+            var result = await _mediator.Send(command);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { 
+                    success = false,
+                    message = result.Error,
+                    errors = result.Errors 
+                });
+            }
+
+            var response = new RegisterResponse();
+            return Ok(new { 
+                success = true,
+                data = response.Convert(result.Value),
+                message = "Registration successful" 
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { 
+                success = false,
+                message = "An error occurred during registration",
+                errors = new[] { ex.Message } 
+            });
+        }
     }
 
     [HttpGet("me")]
@@ -34,6 +111,40 @@ public class AuthController(IMediator mediator) : BaseApiController(mediator)
         var userId = GetCurrentUserId();
         var query = new GetUserByIdQuery(userId);
         return await ExecuteQueryAsync<UserResponse, UserDto>(query);
+    }
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateCurrentUser([FromBody] UpdateProfileRequest request)
+    {
+        try
+        {
+            var command = request.Convert();
+            var result = await _mediator.Send(command);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { 
+                    success = false,
+                    message = result.Error,
+                    errors = result.Errors 
+                });
+            }
+
+            var response = new UserResponse();
+            return Ok(new { 
+                success = true,
+                data = response.Convert(result.Value),
+                message = "Profile updated successfully" 
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { 
+                success = false,
+                message = "An error occurred during profile update",
+                errors = new[] { ex.Message } 
+            });
+        }
     }
 
     [HttpGet("users")]

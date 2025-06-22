@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Ediki.Application.Behaviors;
+using AutoMapper;
 
 namespace Ediki.Application;
 
@@ -14,6 +15,15 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        
+        // Configure AutoMapper manually to avoid ambiguous method calls
+        var mapperConfig = new MapperConfiguration(cfg =>
+        {
+            cfg.AddMaps(typeof(DependencyInjection).Assembly);
+        });
+        
+        services.AddSingleton(mapperConfig);
+        services.AddSingleton<IMapper>(provider => new Mapper(mapperConfig));
         
         return services;
     }

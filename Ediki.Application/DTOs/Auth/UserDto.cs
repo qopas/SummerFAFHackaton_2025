@@ -1,4 +1,6 @@
-﻿namespace Ediki.Application.DTOs.Auth;
+﻿using Ediki.Domain.Enums;
+
+namespace Ediki.Application.DTOs.Auth;
 
 public class UserDto
 {
@@ -6,6 +8,7 @@ public class UserDto
     public string Email { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public PreferredRole PreferredRole { get; set; } = PreferredRole.NotSet;
     public List<string> Roles { get; set; } = new();
     public DateTime CreatedAt { get; set; }
 }

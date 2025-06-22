@@ -15,8 +15,7 @@ public class TaskConfiguration : IEntityTypeConfiguration<Domain.Entities.Task>
             .IsRequired();
             
         builder.Property(t => t.SprintId)
-            .HasMaxLength(36)
-            .IsRequired();
+            .HasMaxLength(36);
             
         builder.Property(t => t.ProjectId)
             .HasMaxLength(36)
@@ -70,7 +69,7 @@ public class TaskConfiguration : IEntityTypeConfiguration<Domain.Entities.Task>
         builder.HasOne(t => t.Sprint)
             .WithMany(s => s.Tasks)
             .HasForeignKey(t => t.SprintId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.SetNull);
             
         builder.HasOne(t => t.Project)
             .WithMany()

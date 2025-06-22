@@ -16,16 +16,57 @@ public class UpdateTaskCommandHandler(ITaskRepository taskRepository) : IRequest
             if (task == null)
                 return Result<TaskDto>.Failure($"Task with ID {request.Id} not found.");
 
-            task.Title = request.Title;
-            task.Description = request.Description;
-            task.AssigneeId = request.AssigneeId;
-            task.Status = request.Status;
-            task.Priority = request.Priority;
-            task.EstimatedHours = request.EstimatedHours;
-            task.ActualHours = request.ActualHours;
-            task.Tags = request.Tags;
-            task.Dependencies = request.Dependencies;
-            task.DueDate = request.DueDate;
+            if (request.Title != null)
+            {
+                task.Title = request.Title;
+            }
+
+            if (request.Description != null)
+            {
+                task.Description = request.Description;
+            }
+
+            if (request.AssigneeId != null)
+            {
+                task.AssigneeId = request.AssigneeId;
+            }
+
+            if (request.Status.HasValue)
+            {
+                task.Status = request.Status.Value;
+            }
+
+            if (request.Priority.HasValue)
+            {
+                task.Priority = request.Priority.Value;
+            }
+
+            if (request.EstimatedHours.HasValue)
+            {
+                task.EstimatedHours = request.EstimatedHours;
+            }
+
+            if (request.ActualHours.HasValue)
+            {
+                task.ActualHours = request.ActualHours;
+            }
+
+            if (request.Tags != null)
+            {
+                task.Tags = request.Tags;
+            }
+
+            if (request.Dependencies != null)
+            {
+                task.Dependencies = request.Dependencies;
+            }
+
+            if (request.DueDate.HasValue)
+            {
+                task.DueDate = request.DueDate;
+            }
+
+            task.UpdatedAt = DateTime.UtcNow;
 
             var updatedTask = await taskRepository.UpdateAsync(task);
 

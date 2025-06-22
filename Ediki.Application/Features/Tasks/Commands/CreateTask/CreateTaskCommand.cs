@@ -8,7 +8,7 @@ namespace Ediki.Application.Features.Tasks.Commands.CreateTask;
 
 public class CreateTaskCommand : IRequest<Result<TaskDto>>
 {
-    public string SprintId { get; set; } = string.Empty;
+    public string? SprintId { get; set; }
     public string ProjectId { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -19,5 +19,4 @@ public class CreateTaskCommand : IRequest<Result<TaskDto>>
     public List<string> Tags { get; set; } = new();
     public List<string> Dependencies { get; set; } = new();
     public DateTime? DueDate { get; set; }
-    public string CreatedBy { get; set; } = string.Empty;
 } 

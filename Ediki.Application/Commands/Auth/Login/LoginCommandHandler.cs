@@ -56,6 +56,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
                 Email = user.Email!,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
+                PreferredRole = user.PreferredRole,
                 Roles = userRoles.ToList(),
                 CreatedAt = user.CreatedAt
             }

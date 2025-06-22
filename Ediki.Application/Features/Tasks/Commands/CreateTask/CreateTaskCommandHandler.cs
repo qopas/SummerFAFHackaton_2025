@@ -1,17 +1,22 @@
 using Ediki.Application.Common.Interfaces;
 using Ediki.Application.Features.Tasks.DTOs;
+using Ediki.Application.Interfaces;
 using Ediki.Domain.Common;
 using MediatR;
 using DomainTask = Ediki.Domain.Entities.Task;
 
 namespace Ediki.Application.Features.Tasks.Commands.CreateTask;
 
-public class CreateTaskCommandHandler(ITaskRepository taskRepository) : IRequestHandler<CreateTaskCommand, Result<TaskDto>>
+public class CreateTaskCommandHandler(
+    ITaskRepository taskRepository,
+    ICurrentUserService currentUserService) : IRequestHandler<CreateTaskCommand, Result<TaskDto>>
 {
     public async System.Threading.Tasks.Task<Result<TaskDto>> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
     {
         try
         {
+            var userId = currentUserService.UserId ?? throw new UnauthorizedAccessException("User not authenticated");
+
             var task = new DomainTask
             {
                 SprintId = request.SprintId,
@@ -25,7 +30,7 @@ public class CreateTaskCommandHandler(ITaskRepository taskRepository) : IRequest
                 Tags = request.Tags,
                 Dependencies = request.Dependencies,
                 DueDate = request.DueDate,
-                CreatedBy = request.CreatedBy
+                CreatedBy = userId
             };
 
             var createdTask = await taskRepository.CreateAsync(task);

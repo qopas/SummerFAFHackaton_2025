@@ -26,6 +26,7 @@ public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager)
             Email = user.Email!,
             FirstName = user.FirstName,
             LastName = user.LastName,
+            PreferredRole = user.PreferredRole,
             Roles = roles.ToList(),
             CreatedAt = user.CreatedAt
         };

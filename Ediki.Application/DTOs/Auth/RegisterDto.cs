@@ -1,4 +1,6 @@
-﻿namespace Ediki.Application.DTOs.Auth;
+﻿using Ediki.Domain.Enums;
+
+namespace Ediki.Application.DTOs.Auth;
 
 public class RegisterRequestDto
 {
@@ -8,6 +10,7 @@ public class RegisterRequestDto
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string Role { get; set; } = "User";
+    public PreferredRole PreferredRole { get; set; } = PreferredRole.NotSet;
 }
 
 public class RegisterResponseDto

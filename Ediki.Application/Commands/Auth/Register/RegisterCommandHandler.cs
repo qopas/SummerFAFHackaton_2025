@@ -40,6 +40,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
             Email = request.Email,
             FirstName = request.FirstName,
             LastName = request.LastName,
+            PreferredRole = request.PreferredRole,
             CreatedAt = DateTime.UtcNow
         };
 

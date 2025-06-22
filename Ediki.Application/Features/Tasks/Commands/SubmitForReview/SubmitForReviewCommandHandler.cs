@@ -1,0 +1,66 @@
+using Ediki.Application.Common.Interfaces;
+using Ediki.Application.Features.Tasks.DTOs;
+using Ediki.Application.Interfaces;
+using Ediki.Domain.Common;
+using MediatR;
+using TaskStatus = Ediki.Domain.Enums.TaskStatus;
+
+namespace Ediki.Application.Features.Tasks.Commands.SubmitForReview;
+
+public class SubmitForReviewCommandHandler(
+    ITaskRepository taskRepository,
+    ICurrentUserService currentUserService) : IRequestHandler<SubmitForReviewCommand, Result<TaskDto>>
+{
+    public async Task<Result<TaskDto>> Handle(SubmitForReviewCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var userId = currentUserService.UserId ?? throw new UnauthorizedAccessException("User not authenticated");
+            
+            var task = await taskRepository.GetByIdAsync(request.TaskId);
+            if (task == null)
+                return Result<TaskDto>.Failure($"Task with ID {request.TaskId} not found.");
+
+            if (task.Status != TaskStatus.InProgress)
+                return Result<TaskDto>.Failure($"Task cannot be submitted for review. Current status: {task.Status}. Only tasks with 'InProgress' status can be submitted for review.");
+
+            if (task.AssigneeId != userId)
+                return Result<TaskDto>.Failure("You can only submit tasks assigned to you for review.");
+
+            task.Status = TaskStatus.Review;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            var updatedTask = await taskRepository.UpdateAsync(task);
+
+            var taskDto = new TaskDto
+            {
+                Id = updatedTask.Id,
+                SprintId = updatedTask.SprintId,
+                ProjectId = updatedTask.ProjectId,
+                Title = updatedTask.Title,
+                Description = updatedTask.Description,
+                AssigneeId = updatedTask.AssigneeId,
+                AssigneeName = updatedTask.Assignee?.UserName ?? string.Empty,
+                AssigneeEmail = updatedTask.Assignee?.Email ?? string.Empty,
+                Status = updatedTask.Status,
+                Priority = updatedTask.Priority,
+                EstimatedHours = updatedTask.EstimatedHours,
+                ActualHours = updatedTask.ActualHours,
+                Tags = updatedTask.Tags,
+                Dependencies = updatedTask.Dependencies,
+                DueDate = updatedTask.DueDate,
+                CompletedAt = updatedTask.CompletedAt,
+                CreatedBy = updatedTask.CreatedBy,
+                CreatedByName = updatedTask.CreatedByUser?.UserName ?? string.Empty,
+                CreatedAt = updatedTask.CreatedAt,
+                UpdatedAt = updatedTask.UpdatedAt
+            };
+
+            return Result<TaskDto>.Success(taskDto);
+        }
+        catch (Exception ex)
+        {
+            return Result<TaskDto>.Failure(ex.Message);
+        }
+    }
+} 

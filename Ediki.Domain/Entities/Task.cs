@@ -6,7 +6,7 @@ namespace Ediki.Domain.Entities;
 public class Task
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string SprintId { get; set; } = string.Empty;
+    public string? SprintId { get; set; }
     public string ProjectId { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -24,7 +24,7 @@ public class Task
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public Sprint Sprint { get; set; } = null!;
+    public Sprint? Sprint { get; set; }
     public Project Project { get; set; } = null!;
     public ApplicationUser? Assignee { get; set; }
     public ApplicationUser CreatedByUser { get; set; } = null!;

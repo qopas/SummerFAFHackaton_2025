@@ -30,7 +30,7 @@ public class Project : BaseEntity
     public List<ProjectResource>? Resources { get; private set; }
     public bool IsPublic { get; set; }
     public bool IsFeatured { get; private set; }
-    public string CreatedById { get; private set; } = string.Empty;
+    public required string CreatedById { get; set; }
 
     private Project() { }
 
