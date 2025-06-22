@@ -12,6 +12,7 @@ using Ediki.Domain.Interfaces;
 using Ediki.Infrastructure.Data;
 using Ediki.Infrastructure.Repositories;
 using Ediki.Infrastructure.Services;
+using Task = System.Threading.Tasks.Task;
 
 namespace Ediki.Infrastructure;
 
@@ -19,9 +20,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Database
+        // Database - Build connection string from environment variables with fallback to configuration
+        var connectionString = BuildConnectionString(configuration);
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(connectionString));
             
         // Register IApplicationDbContext
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
@@ -80,5 +82,100 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
 
         return services;
+    }
+    
+    private static string BuildConnectionString(IConfiguration configuration)
+    {
+        var connectionString = BuildConnectionStringFromEnv() 
+                              ?? configuration.GetConnectionString("DefaultConnection");
+        
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new InvalidOperationException("Database connection string is not configured");
+        }
+
+        return connectionString;
+    }
+
+    private static string? BuildConnectionStringFromEnv()
+    {
+        var host = Environment.GetEnvironmentVariable("PGHOST");
+        var port = Environment.GetEnvironmentVariable("PGPORT");
+        var database = Environment.GetEnvironmentVariable("PGDATABASE");
+        var username = Environment.GetEnvironmentVariable("PGUSER");
+        var password = Environment.GetEnvironmentVariable("PGPASSWORD");
+
+        if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(database) || 
+            string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        {
+            return null;
+        }
+
+        return $"Host={host};Port={port ?? "5432"};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+    }
+    
+    public static async Task InitializeDatabaseAsync(this IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+        
+        try
+        {
+            // Apply pending migrations
+            var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+            if (pendingMigrations.Any())
+            {
+                Console.WriteLine($"Applying {pendingMigrations.Count()} pending migrations...");
+                await context.Database.MigrateAsync();
+                Console.WriteLine("Database migrations applied successfully.");
+            }
+            else
+            {
+                Console.WriteLine("Database is up to date. No migrations to apply.");
+            }
+            
+            await EnsureRolesAsync(roleManager);
+            
+            Console.WriteLine("Database initialization completed successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Database initialization failed: {ex.Message}");
+            throw;
+        }
+    }
+
+    private static async Task EnsureRolesAsync(RoleManager<ApplicationRole> roleManager)
+    {
+        var defaultRoles = new[]
+        {
+            new { Name = "Admin", Description = "Administrator with full access" },
+            new { Name = "User", Description = "Regular user with limited access" },
+            new { Name = "Creator", Description = "Content creator with special permissions" }
+        };
+
+        foreach (var roleInfo in defaultRoles)
+        {
+            if (!await roleManager.RoleExistsAsync(roleInfo.Name))
+            {
+                var role = new ApplicationRole
+                {
+                    Name = roleInfo.Name,
+                    Description = roleInfo.Description,
+                    CreatedAt = DateTime.UtcNow
+                };
+                
+                var result = await roleManager.CreateAsync(role);
+                if (result.Succeeded)
+                {
+                    Console.WriteLine($"Created role: {roleInfo.Name}");
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to create role {roleInfo.Name}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
+            }
+        }
     }
 }
