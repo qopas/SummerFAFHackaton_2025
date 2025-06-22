@@ -2,6 +2,7 @@
 using Ediki.Api.DTOs.In.Auth;
 using Ediki.Api.DTOs.Out.Auth;
 using Ediki.Application.Commands.Auth.Login;
+using Ediki.Application.Commands.Auth.UpdateUser;
 using Ediki.Application.DTOs.Auth;
 using Ediki.Application.Queries.Auth.GetAllUsers;
 using Ediki.Application.Queries.Auth.GetUserById;
@@ -34,6 +35,23 @@ public class AuthController(IMediator mediator) : BaseApiController(mediator)
         var userId = GetCurrentUserId();
         var query = new GetUserByIdQuery(userId);
         return await ExecuteQueryAsync<UserResponse, UserDto>(query);
+    }
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateCurrentUser([FromBody] UpdateUserRequest request)
+    {
+        var userId = GetCurrentUserId();
+        var command = request.Convert();
+        command.UserId = userId;
+        
+        var result = await _mediator.Send(command);
+        
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { message = result.Error, errors = result.Errors });
+        }
+        
+        return Ok(new UserResponse().Convert(result.Value));
     }
 
     [HttpGet("users")]

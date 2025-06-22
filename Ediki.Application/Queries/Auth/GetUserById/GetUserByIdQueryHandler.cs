@@ -27,7 +27,19 @@ public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager)
             FirstName = user.FirstName,
             LastName = user.LastName,
             Roles = roles.ToList(),
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            
+            // New fields
+            PreferredRole = user.PreferredRole,
+            Xp = user.Xp,
+            Level = user.Level,
+            Badges = user.Badges,
+            CompletedProjects = user.CompletedProjects,
+            Skills = user.Skills,
+            University = user.University,
+            GraduationYear = user.GraduationYear,
+            Location = user.Location,
+            SocialLinks = user.SocialLinks
         };
 
         return Result<UserDto>.Success(userDto);
