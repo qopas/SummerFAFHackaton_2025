@@ -13,7 +13,7 @@ public record RegisterCommand(
     string FirstName,
     string LastName,
     string Role,
-    PreferredRole PreferredRole = PreferredRole.NotSet,
+    ProjectRole PreferredRole = ProjectRole.NotSet,
     int Xp = 0,
     int Level = 1,
     List<string>? Badges = null,

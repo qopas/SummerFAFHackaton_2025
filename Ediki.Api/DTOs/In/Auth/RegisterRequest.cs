@@ -15,7 +15,7 @@ public class RegisterRequest : IRequestIn<RegisterCommand>
     public string Role { get; set; } = "User";
     
     // New fields
-    public PreferredRole PreferredRole { get; set; } = PreferredRole.NotSet;
+    public ProjectRole PreferredRole { get; set; } = ProjectRole.NotSet;
     public int Xp { get; set; } = 0;
     public int Level { get; set; } = 1;
     public List<string>? Badges { get; set; }

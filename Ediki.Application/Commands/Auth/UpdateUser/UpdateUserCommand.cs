@@ -11,7 +11,7 @@ public class UpdateUserCommand : IRequest<Result<UserDto>>
     public string UserId { get; set; } = string.Empty;
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
-    public PreferredRole? PreferredRole { get; set; }
+    public ProjectRole? PreferredRole { get; set; }
     public List<string>? Skills { get; set; }
     public string? University { get; set; }
     public int? GraduationYear { get; set; }
