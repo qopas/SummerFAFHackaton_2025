@@ -2,6 +2,8 @@ using Ediki.Application.Common.Interfaces;
 using Ediki.Application.Features.Tasks.DTOs;
 using Ediki.Domain.Common;
 using MediatR;
+using TaskStatus = Ediki.Domain.Enums.TaskStatus;
+using TaskPriority = Ediki.Domain.Enums.TaskPriority;
 using DomainTask = Ediki.Domain.Entities.Task;
 
 namespace Ediki.Application.Features.Tasks.Commands.UpdateTask;
@@ -31,14 +33,22 @@ public class UpdateTaskCommandHandler(ITaskRepository taskRepository) : IRequest
                 task.AssigneeId = request.AssigneeId;
             }
 
-            if (request.Status.HasValue)
+            if (!string.IsNullOrEmpty(request.Status))
             {
-                task.Status = request.Status.Value;
+                var parsedStatus = ParseTaskStatus(request.Status);
+                if (parsedStatus.HasValue)
+                {
+                    task.Status = parsedStatus.Value;
+                }
             }
 
-            if (request.Priority.HasValue)
+            if (!string.IsNullOrEmpty(request.Priority))
             {
-                task.Priority = request.Priority.Value;
+                var parsedPriority = ParseTaskPriority(request.Priority);
+                if (parsedPriority.HasValue)
+                {
+                    task.Priority = parsedPriority.Value;
+                }
             }
 
             if (request.EstimatedHours.HasValue)
@@ -100,5 +110,37 @@ public class UpdateTaskCommandHandler(ITaskRepository taskRepository) : IRequest
         {
             return Result<TaskDto>.Failure(ex.Message);
         }
+    }
+
+    private static TaskStatus? ParseTaskStatus(string? status)
+    {
+        if (string.IsNullOrEmpty(status))
+            return null;
+
+        return status.ToLower() switch
+        {
+            "todo" => TaskStatus.Todo,
+            "in-progress" => TaskStatus.InProgress,
+            "review" => TaskStatus.Review,
+            "completed" => TaskStatus.Completed,
+            _ => int.TryParse(status, out var statusInt) ? (TaskStatus)statusInt : 
+                 Enum.TryParse<TaskStatus>(status, true, out var statusEnum) ? statusEnum : null
+        };
+    }
+
+    private static TaskPriority? ParseTaskPriority(string? priority)
+    {
+        if (string.IsNullOrEmpty(priority))
+            return null;
+
+        return priority.ToLower() switch
+        {
+            "low" => TaskPriority.Low,
+            "medium" => TaskPriority.Medium,
+            "high" => TaskPriority.High,
+            "urgent" => TaskPriority.Urgent,
+            _ => int.TryParse(priority, out var priorityInt) ? (TaskPriority)priorityInt : 
+                 Enum.TryParse<TaskPriority>(priority, true, out var priorityEnum) ? priorityEnum : null
+        };
     }
 } 

@@ -27,7 +27,6 @@ public class UpdateProjectProgressCommandHandler(
         project.Status = request.Status;
         await projectRepository.UpdateAsync(project);
 
-        // Convert to DTO before returning
         var projectDto = new ProjectDto
         {
             Id = project.Id,

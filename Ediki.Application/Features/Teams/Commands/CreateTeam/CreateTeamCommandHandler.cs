@@ -28,21 +28,19 @@ public class CreateTeamCommandHandler : IRequestHandler<CreateTeamCommand, Resul
 
     public async Task<Result<TeamDto>> Handle(CreateTeamCommand request, CancellationToken cancellationToken)
     {
-        // Check if project exists
         var project = await _projectRepository.GetByIdAsync(request.ProjectId);
         if (project == null)
         {
             return Result<TeamDto>.Failure("Project not found");
         }
 
-        // Check if project already has a team
         var existingTeam = await _teamRepository.GetByProjectIdAsync(request.ProjectId);
         if (existingTeam != null)
         {
             return Result<TeamDto>.Failure("Project already has a team");
         }
 
-        // Validate team lead if provided
+        
         if (!string.IsNullOrWhiteSpace(request.TeamLead))
         {
             var teamLeadUser = await _userManager.FindByIdAsync(request.TeamLead);
@@ -52,7 +50,7 @@ public class CreateTeamCommandHandler : IRequestHandler<CreateTeamCommand, Resul
             }
         }
 
-        // Create the team
+        
         var team = Team.Create(
             request.ProjectId,
             request.Name,

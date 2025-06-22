@@ -13,8 +13,8 @@ public class CreateTaskCommand : IRequest<Result<TaskDto>>
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? AssigneeId { get; set; }
-    public TaskStatus Status { get; set; } = TaskStatus.Todo;
-    public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+    public string? Status { get; set; }
+    public string? Priority { get; set; }
     public float? EstimatedHours { get; set; }
     public List<string> Tags { get; set; } = new();
     public List<string> Dependencies { get; set; } = new();

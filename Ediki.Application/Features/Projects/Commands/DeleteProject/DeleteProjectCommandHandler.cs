@@ -34,7 +34,6 @@ public class DeleteProjectCommandHandler : IRequestHandler<DeleteProjectCommand,
 
         await _projectRepository.DeleteAsync(project);
 
-        // Convert to DTO before returning
         var projectDto = new ProjectDto
         {
             Id = project.Id,

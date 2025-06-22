@@ -2,6 +2,7 @@ using Ediki.Application.Common.Interfaces;
 using Ediki.Application.Features.Tasks.DTOs;
 using Ediki.Domain.Common;
 using MediatR;
+using TaskStatus = Ediki.Domain.Enums.TaskStatus;
 
 namespace Ediki.Application.Features.Tasks.Commands.UpdateTaskStatus;
 
@@ -15,7 +16,13 @@ public class UpdateTaskStatusCommandHandler(ITaskRepository taskRepository) : IR
             if (task == null)
                 return Result<TaskDto>.Failure($"Task with ID {request.TaskId} not found.");
 
-            task.Status = request.Status;
+            // Parse status from string (supporting kebab-case)
+            var taskStatus = ParseTaskStatus(request.Status);
+            if (!taskStatus.HasValue)
+                return Result<TaskDto>.Failure($"Invalid status value: {request.Status}");
+
+            task.Status = taskStatus.Value;
+            task.UpdatedAt = DateTime.UtcNow;
             var updatedTask = await taskRepository.UpdateAsync(task);
 
             var taskDto = new TaskDto
@@ -48,5 +55,21 @@ public class UpdateTaskStatusCommandHandler(ITaskRepository taskRepository) : IR
         {
             return Result<TaskDto>.Failure(ex.Message);
         }
+    }
+
+    private static TaskStatus? ParseTaskStatus(string status)
+    {
+        if (string.IsNullOrEmpty(status))
+            return null;
+
+        return status.ToLower() switch
+        {
+            "todo" => TaskStatus.Todo,
+            "in-progress" => TaskStatus.InProgress,
+            "review" => TaskStatus.Review,
+            "completed" => TaskStatus.Completed,
+            _ => int.TryParse(status, out var statusInt) ? (TaskStatus)statusInt : 
+                 Enum.TryParse<TaskStatus>(status, true, out var statusEnum) ? statusEnum : null
+        };
     }
 } 

@@ -3,6 +3,8 @@ using Ediki.Application.Features.Tasks.DTOs;
 using Ediki.Application.Interfaces;
 using Ediki.Domain.Common;
 using MediatR;
+using TaskStatus = Ediki.Domain.Enums.TaskStatus;
+using TaskPriority = Ediki.Domain.Enums.TaskPriority;
 using DomainTask = Ediki.Domain.Entities.Task;
 
 namespace Ediki.Application.Features.Tasks.Commands.CreateTask;
@@ -24,8 +26,8 @@ public class CreateTaskCommandHandler(
                 Title = request.Title,
                 Description = request.Description,
                 AssigneeId = request.AssigneeId,
-                Status = request.Status,
-                Priority = request.Priority,
+                Status = ParseTaskStatus(request.Status) ?? TaskStatus.Todo,
+                Priority = ParseTaskPriority(request.Priority) ?? TaskPriority.Medium,
                 EstimatedHours = request.EstimatedHours,
                 Tags = request.Tags,
                 Dependencies = request.Dependencies,
@@ -65,5 +67,37 @@ public class CreateTaskCommandHandler(
         {
             return Result<TaskDto>.Failure(ex.Message);
         }
+    }
+
+    private static TaskStatus? ParseTaskStatus(string? status)
+    {
+        if (string.IsNullOrEmpty(status))
+            return null;
+
+        return status.ToLower() switch
+        {
+            "todo" => TaskStatus.Todo,
+            "in-progress" => TaskStatus.InProgress,
+            "review" => TaskStatus.Review,
+            "completed" => TaskStatus.Completed,
+            _ => int.TryParse(status, out var statusInt) ? (TaskStatus)statusInt : 
+                 Enum.TryParse<TaskStatus>(status, true, out var statusEnum) ? statusEnum : null
+        };
+    }
+
+    private static TaskPriority? ParseTaskPriority(string? priority)
+    {
+        if (string.IsNullOrEmpty(priority))
+            return null;
+
+        return priority.ToLower() switch
+        {
+            "low" => TaskPriority.Low,
+            "medium" => TaskPriority.Medium,
+            "high" => TaskPriority.High,
+            "urgent" => TaskPriority.Urgent,
+            _ => int.TryParse(priority, out var priorityInt) ? (TaskPriority)priorityInt : 
+                 Enum.TryParse<TaskPriority>(priority, true, out var priorityEnum) ? priorityEnum : null
+        };
     }
 } 

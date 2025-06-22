@@ -16,7 +16,6 @@ public static class DependencyInjection
         
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         
-        // Configure AutoMapper manually to avoid ambiguous method calls
         var mapperConfig = new MapperConfiguration(cfg =>
         {
             cfg.AddMaps(typeof(DependencyInjection).Assembly);

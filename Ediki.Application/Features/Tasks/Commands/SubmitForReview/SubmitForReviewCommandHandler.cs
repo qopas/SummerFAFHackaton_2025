@@ -21,9 +21,6 @@ public class SubmitForReviewCommandHandler(
             if (task == null)
                 return Result<TaskDto>.Failure($"Task with ID {request.TaskId} not found.");
 
-            if (task.Status != TaskStatus.InProgress)
-                return Result<TaskDto>.Failure($"Task cannot be submitted for review. Current status: {task.Status}. Only tasks with 'InProgress' status can be submitted for review.");
-
             if (task.AssigneeId != userId)
                 return Result<TaskDto>.Failure("You can only submit tasks assigned to you for review.");
 

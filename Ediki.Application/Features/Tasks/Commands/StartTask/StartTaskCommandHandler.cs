@@ -21,9 +21,6 @@ public class StartTaskCommandHandler(
             if (task == null)
                 return Result<TaskDto>.Failure($"Task with ID {request.TaskId} not found.");
 
-            if (task.Status != TaskStatus.Todo)
-                return Result<TaskDto>.Failure($"Task cannot be started. Current status: {task.Status}. Only tasks with 'Todo' status can be started.");
-
             if (!string.IsNullOrEmpty(task.AssigneeId) && task.AssigneeId != userId)
                 return Result<TaskDto>.Failure("You can only start tasks assigned to you.");
 

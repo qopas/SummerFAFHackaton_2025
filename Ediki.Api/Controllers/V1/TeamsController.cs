@@ -87,7 +87,6 @@ public class TeamsController(IMediator mediator) : BaseApiController(mediator)
     }
 }
 
-// Wrapper classes to handle the IRequestIn interface properly
 public class UpdateTeamRequestWrapper : IRequestIn<UpdateTeamCommand>
 {
     private readonly UpdateTeamRequest _request;

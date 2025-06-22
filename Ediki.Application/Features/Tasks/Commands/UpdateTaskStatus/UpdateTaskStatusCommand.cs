@@ -8,5 +8,5 @@ namespace Ediki.Application.Features.Tasks.Commands.UpdateTaskStatus;
 public class UpdateTaskStatusCommand : IRequest<Result<TaskDto>>
 {
     public string TaskId { get; set; } = string.Empty;
-    public TaskStatus Status { get; set; }
+    public string Status { get; set; } = string.Empty;
 } 

@@ -15,14 +15,12 @@ public class JoinProjectCommandHandler(
     {
         var userId = currentUserService.UserId ?? throw new UnauthorizedAccessException("User not authenticated");
 
-        // Check if user can join the project with the specified role
         var canJoin = await projectMemberRepository.CanUserJoinProjectAsync(request.ProjectId, userId, request.Role);
         if (!canJoin)
         {
             return Result<string>.Failure("Cannot join project. Either you're already a member, the project doesn't need this role, or the project is full.");
         }
 
-        // Create project member
         var projectMember = ProjectMember.Create(
             projectId: request.ProjectId,
             userId: userId,

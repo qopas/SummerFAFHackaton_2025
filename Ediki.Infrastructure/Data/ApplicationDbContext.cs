@@ -13,6 +13,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ProjectMember> ProjectMembers { get; set; }
     public DbSet<Sprint> Sprints { get; set; }
     public DbSet<Domain.Entities.Task> Tasks { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

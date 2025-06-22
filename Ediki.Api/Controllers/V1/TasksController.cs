@@ -177,14 +177,13 @@ public class TasksController(IMediator mediator) : BaseApiController(mediator)
     [ProducesResponseType(typeof(TaskDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateTaskStatus(string id, [FromBody] UpdateTaskStatusCommand command)
+    public async Task<IActionResult> UpdateTaskStatus(string id, [FromBody] UpdateTaskStatusRequest request)
     {
-        if (id != command.TaskId)
-            return BadRequest(new {
-                success = false,
-                message = "ID mismatch",
-                errors = new[] { "Task ID in URL does not match ID in request body" }
-            });
+        var command = new UpdateTaskStatusCommand 
+        { 
+            TaskId = id,
+            Status = request.Status
+        };
 
         var result = await _mediator.Send(command);
         
@@ -370,4 +369,9 @@ public class TasksController(IMediator mediator) : BaseApiController(mediator)
             _ => priority.ToString()
         };
     }
+}
+
+public class UpdateTaskStatusRequest
+{
+    public string Status { get; set; } = string.Empty;
 } 

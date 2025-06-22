@@ -21,7 +21,6 @@ public class AuthController(IMediator mediator) : BaseApiController(mediator)
     {
         try
         {
-            // Проверяем, что request не null и содержит данные
             if (request == null)
             {
                 return BadRequest(new { 
