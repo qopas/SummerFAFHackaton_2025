@@ -26,5 +26,6 @@ public interface IProjectMemberRepository
     Task<bool> IsProjectLeadAsync(string projectId, string userId);
     Task<bool> HasRequiredRoleAsync(string projectId, string userId, ProjectRole requiredRole);
     Task<int> GetMemberCountAsync(string projectId);
+    Task<int> GetActiveMemberCountAsync(string projectId);
     Task<bool> CanUserJoinProjectAsync(string projectId, string userId, ProjectRole role);
 } 

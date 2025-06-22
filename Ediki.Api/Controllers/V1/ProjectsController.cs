@@ -8,6 +8,8 @@ using Ediki.Application.Features.Projects.Commands.UpdateProjectVisibility;
 using Ediki.Application.Features.Projects.DTOs;
 using Ediki.Application.Features.Projects.Queries.GetProjectById;
 using Ediki.Application.Features.Projects.Queries.GetProjects;
+using Ediki.Application.Features.ProjectMembers.Commands.InviteUserToProject;
+using Ediki.Application.Features.ProjectMembers.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SummerFAFHackaton_2025.DTOs.In.Projects;
@@ -62,6 +64,54 @@ public class ProjectsController(IMediator mediator) : BaseApiController(mediator
         };
 
         return StatusCode(StatusCodes.Status201Created, response);
+    }
+
+    [HttpPost("{id}/invite")]
+    [ProducesResponseType(typeof(ProjectMemberDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> InviteUserToProject(string id, [FromBody] InviteUserToProjectCommand command)
+    {
+        try
+        {
+            if (id != command.ProjectId)
+                return BadRequest(new { 
+                    success = false,
+                    message = "Project ID mismatch",
+                    errors = new[] { "Project ID in URL doesn't match request body" },
+                    timestamp = DateTime.UtcNow
+                });
+
+            var result = await _mediator.Send(command);
+            
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new { 
+                    success = false,
+                    message = result.Error, 
+                    errors = result.Errors,
+                    timestamp = DateTime.UtcNow
+                });
+            }
+
+            return Ok(new {
+                success = true,
+                data = result.Value,
+                message = "User invited to project successfully",
+                errors = new string[0],
+                timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new {
+                success = false,
+                message = "Error inviting user to project",
+                errors = new[] { ex.Message },
+                timestamp = DateTime.UtcNow
+            });
+        }
     }
 
     [HttpDelete("{id}")]

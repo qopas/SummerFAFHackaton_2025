@@ -140,6 +140,12 @@ public class ProjectMemberRepository(ApplicationDbContext dbContext) : IProjectM
             .CountAsync(pm => pm.ProjectId == projectId && pm.IsActive && !pm.IsDeleted);
     }
 
+    public async Task<int> GetActiveMemberCountAsync(string projectId)
+    {
+        return await dbContext.ProjectMembers
+            .CountAsync(pm => pm.ProjectId == projectId && pm.IsActive && !pm.IsDeleted);
+    }
+
     public async Task<bool> CanUserJoinProjectAsync(string projectId, string userId, ProjectRole role)
     {
         // Check if user is already a member
