@@ -13,7 +13,7 @@ public class ApplicationUser : IdentityUser<string>
     public bool IsDeleted { get; set; } = false;
     
     // New fields
-    public ProjectRole PreferredRole { get; set; } = ProjectRole.NotSet;
+    public ProjectRole PreferredRole { get; set; }
     public int Xp { get; set; } = 0;
     public int Level { get; set; } = 1;
     public List<string> Badges { get; set; } = new();
