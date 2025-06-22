@@ -24,7 +24,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Ediki.Application\Ediki.Application.csproj" />
-      <ProjectReference Include="..\Ediki.Domain\Ediki.Domain.csproj" />
       <ProjectReference Include="..\Ediki.Infrastructure\Ediki.Infrastructure.csproj" />
     </ItemGroup>
 

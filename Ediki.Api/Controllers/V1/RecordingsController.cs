@@ -111,11 +111,6 @@ public class RecordingsController(IMediator mediator, IMediaServerService mediaS
     {
         try
         {
-            // In a real implementation, you would:
-            // 1. Validate user has permission to delete this recording
-            // 2. Remove from database
-            // 3. Delete file from storage
-            
             var recordingsPath = Path.Combine(Directory.GetCurrentDirectory(), "recordings");
             var files = Directory.GetFiles(recordingsPath, $"{recordingId}_*");
             
@@ -158,7 +153,6 @@ public class RecordingsController(IMediator mediator, IMediaServerService mediaS
     {
         try
         {
-            // In a real implementation, you would query the database with pagination
             var recordingsPath = Path.Combine(Directory.GetCurrentDirectory(), "recordings");
             
             if (!Directory.Exists(recordingsPath))

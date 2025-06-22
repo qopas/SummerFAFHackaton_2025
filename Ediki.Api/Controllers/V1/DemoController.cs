@@ -7,6 +7,12 @@ using Ediki.Domain.Enums;
 using SummerFAFHackaton_2025.Controllers;
 using MediatR;
 using Ediki.Application.Features.Demo.Commands.CreateDemoSession;
+using Ediki.Application.Features.Demo.Queries.GetDemoSession;
+using Ediki.Application.Features.Demo.Queries.GetDemoSessions;
+using Ediki.Application.Features.Demo.Queries.GetParticipants;
+using Ediki.Application.Features.Demo.Commands.InviteParticipants;
+using Ediki.Application.Features.Demo.Commands.JoinSession;
+using Ediki.Application.Features.Demo.Commands.LeaveSession;
 
 namespace Ediki.Api.Controllers.V1;
 
@@ -54,8 +60,6 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
         }
 
         Console.WriteLine($"✅ Demo session created successfully: {result.Value.Id}");
-
-        // Create media room for the session
         try
         {
             Console.WriteLine($"🏠 Attempting to create media room for session: {result.Value.Id}");
@@ -73,7 +77,6 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
         }
         catch (Exception ex)
         {
-            // Log error but don't fail the session creation
             Console.WriteLine($"❌ Failed to create media room for session {result.Value.Id}: {ex.Message}");
             Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
         }
@@ -93,14 +96,24 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetDemoSession(string id)
     {
-        // TODO: Implement GetDemoSessionQuery
-        return Ok(new {
+        var query = new GetDemoSessionQuery { Id = id };
+        var result = await _mediator.Send(query);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(new
+            {
+                success = false,
+                message = result.Error,
+                errors = new[] { result.Error },
+                timestamp = DateTime.UtcNow
+            });
+        }
+
+        return Ok(new
+        {
             success = true,
-            data = new {
-                id = id,
-                title = "Sample Demo",
-                status = DemoSessionStatus.Scheduled
-            },
+            data = result.Value,
             message = "Demo session retrieved successfully",
             errors = new string[0],
             timestamp = DateTime.UtcNow
@@ -112,9 +125,6 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> StartDemoSession(string id)
     {
-        // TODO: Implement StartDemoSessionCommand
-        
-        // Notify all participants via SignalR
         await _hubContext.Clients.Group($"demo-{id}").SendAsync("DemoSessionStarted", new
         {
             SessionId = id,
@@ -134,9 +144,6 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> EndDemoSession(string id)
     {
-        // TODO: Implement EndDemoSessionCommand
-        
-        // Notify all participants via SignalR
         await _hubContext.Clients.Group($"demo-{id}").SendAsync("DemoSessionEnded", new
         {
             SessionId = id,
@@ -156,11 +163,32 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> InviteParticipants(string id, [FromBody] InviteParticipantsRequest request)
     {
-        // TODO: Implement InviteParticipantsCommand
-        
-        return Ok(new {
+        var command = new InviteParticipantsCommand
+        {
+            SessionId = id,
+            ParticipantEmails = request.Emails,
+            InviteMessage = request.Message,
+            SendNotification = true
+        };
+
+        var result = await _mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = result.Error,
+                errors = new[] { result.Error },
+                timestamp = DateTime.UtcNow
+            });
+        }
+
+        return Ok(new
+        {
             success = true,
-            data = new {
+            data = new
+            {
                 invited = request.Emails.Count,
                 inviteLink = $"https://yourdomain.com/demo/join/{id}"
             },
@@ -308,146 +336,65 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
         }
     }
 
-    [HttpGet("sessions/{id}/recordings")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetRecordings(string id)
-    {
-        try
-        {
-            Console.WriteLine($"📋 Getting recordings for session: {id}");
-            
-            // Get recordings from MediaServerService (in-memory)
-            var recordings = await _mediaServerService.GetRecordingsAsync(id);
-            var recordingsList = recordings.ToList();
-            
-            Console.WriteLine($"📊 Found {recordingsList.Count} recordings in memory for session: {id}");
-            
-            // Also check physical files in recordings directory
-            var recordingsPath = Path.Combine(Directory.GetCurrentDirectory(), "recordings");
-            var physicalFiles = new List<object>();
-            
-            if (Directory.Exists(recordingsPath))
-            {
-                var files = Directory.GetFiles(recordingsPath, "*.webm");
-                Console.WriteLine($"📁 Found {files.Length} physical recording files");
-                
-                foreach (var file in files)
-                {
-                    var fileName = Path.GetFileName(file);
-                    var fileInfo = new FileInfo(file);
-                    
-                    // Try to extract recordingId from filename (format: recordingId_originalFileName.webm)
-                    var parts = fileName.Split('_', 2);
-                    var recordingId = parts.Length > 0 ? parts[0] : Guid.NewGuid().ToString();
-                    
-                    // Check if this recording is associated with the session
-                    var associatedRecording = recordingsList.FirstOrDefault(r => r.Id == recordingId);
-                    
-                    if (associatedRecording != null)
-                    {
-                        // Use data from memory
-                        physicalFiles.Add(new {
-                            id = associatedRecording.Id,
-                            fileName = associatedRecording.FileName,
-                            fileSize = fileInfo.Length,
-                            duration = associatedRecording.Duration.ToString(@"hh\:mm\:ss"),
-                            quality = associatedRecording.Config.Quality,
-                            status = associatedRecording.Status.ToString(),
-                            startedAt = associatedRecording.StartedAt,
-                            completedAt = associatedRecording.CompletedAt,
-                            downloadUrl = $"/api/v1/recordings/{associatedRecording.Id}/download",
-                            filePath = file
-                        });
-                    }
-                    else
-                    {
-                        // Orphaned file - create basic info
-                        physicalFiles.Add(new {
-                            id = recordingId,
-                            fileName = fileName,
-                            fileSize = fileInfo.Length,
-                            duration = "Unknown",
-                            quality = "Unknown",
-                            status = "Completed",
-                            startedAt = fileInfo.CreationTime,
-                            completedAt = (DateTime?)fileInfo.LastWriteTime,
-                            downloadUrl = $"/api/v1/recordings/{recordingId}/download",
-                            filePath = file
-                        });
-                    }
-                }
-            }
-            
-            Console.WriteLine($"✅ Returning {physicalFiles.Count} recordings for session: {id}");
-            
-            return Ok(new {
-                success = true,
-                data = physicalFiles,
-                message = $"Found {physicalFiles.Count} recordings for session {id}",
-                errors = new string[0],
-                timestamp = DateTime.UtcNow
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error getting recordings for session {id}: {ex.Message}");
-            return StatusCode(500, new {
-                success = false,
-                message = "Error retrieving recordings",
-                errors = new[] { ex.Message },
-                timestamp = DateTime.UtcNow
-            });
-        }
-    }
-
     [HttpGet("sessions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetDemoSessions([FromQuery] DemoSessionStatus? status = null)
+    public async Task<IActionResult> GetDemoSessions([FromQuery] DemoSessionStatus? status = null, [FromQuery] string? userId = null, [FromQuery] bool? isPublic = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        // TODO: Implement GetDemoSessionsQuery
-        
-        return Ok(new {
+        var query = new GetDemoSessionsQuery
+        {
+            Status = status,
+            UserId = userId,
+            IsPublic = isPublic,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var result = await _mediator.Send(query);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = result.Error,
+                errors = new[] { result.Error },
+                timestamp = DateTime.UtcNow
+            });
+        }
+
+        return Ok(new
+        {
             success = true,
-            data = new[] {
-                new {
-                    id = Guid.NewGuid().ToString(),
-                    title = "Product Demo",
-                    status = DemoSessionStatus.Scheduled,
-                    scheduledAt = DateTime.UtcNow.AddHours(1),
-                    participantCount = 5
-                }
-            },
+            data = result.Value,
             message = "Demo sessions retrieved successfully",
             errors = new string[0],
             timestamp = DateTime.UtcNow
         });
     }
 
-    // Participants Management
     [HttpGet("sessions/{id}/participants")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetParticipants(string id)
     {
-        // TODO: Implement GetParticipantsQuery
-        
-        return Ok(new {
+        var query = new GetParticipantsQuery { SessionId = id };
+        var result = await _mediator.Send(query);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(new
+            {
+                success = false,
+                message = result.Error,
+                errors = new[] { result.Error },
+                timestamp = DateTime.UtcNow
+            });
+        }
+
+        return Ok(new
+        {
             success = true,
-            data = new[] {
-                new {
-                    id = Guid.NewGuid().ToString(),
-                    userId = Guid.NewGuid().ToString(),
-                    displayName = "John Doe",
-                    email = "john@example.com",
-                    role = DemoParticipantRole.Participant,
-                    status = DemoParticipantStatus.Joined,
-                    hasVideo = true,
-                    hasAudio = true,
-                    canInteract = true,
-                    joinedAt = DateTime.UtcNow.AddMinutes(-15)
-                }
-            },
+            data = result.Value,
             message = "Participants retrieved successfully",
             errors = new string[0],
             timestamp = DateTime.UtcNow
@@ -460,31 +407,48 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> JoinSession(string id, [FromBody] JoinSessionRequest request)
     {
-        // TODO: Implement JoinSessionCommand
-        
-        var participantId = Guid.NewGuid().ToString();
-        
-        // Notify all participants via SignalR
+        var command = new JoinSessionCommand
+        {
+            SessionId = id,
+            UserId = GetCurrentUserId(),
+            Email = GetCurrentUserEmail(),
+            DisplayName = request.DisplayName,
+            HasVideo = false,
+            HasAudio = false
+        };
+
+        var result = await _mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = result.Error,
+                errors = new[] { result.Error },
+                timestamp = DateTime.UtcNow
+            });
+        }
+
+        // Notify other participants via SignalR
         await _hubContext.Clients.Group($"demo-{id}").SendAsync("ParticipantJoined", new
         {
             SessionId = id,
-            ParticipantId = participantId,
+            ParticipantId = result.Value,
             DisplayName = request.DisplayName,
             JoinedAt = DateTime.UtcNow
         });
-        
-        return Ok(new {
+
+        return Ok(new
+        {
             success = true,
-            data = new {
-                participantId = participantId,
+            data = new
+            {
+                participantId = result.Value,
                 sessionId = id,
-                roomId = $"room-{id}",
-                iceServers = new[] {
-                    new { urls = "stun:stun.l.google.com:19302" },
-                    new { urls = "stun:stun1.l.google.com:19302" }
-                }
+                displayName = request.DisplayName
             },
-            message = "Successfully joined session",
+            message = "Successfully joined the demo session",
             errors = new string[0],
             timestamp = DateTime.UtcNow
         });
@@ -493,35 +457,50 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
     [HttpPost("sessions/{id}/leave")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> LeaveSession(string id)
+    public async Task<IActionResult> LeaveSession(string id, [FromBody] LeaveSessionRequest request)
     {
-        // TODO: Implement LeaveSessionCommand
+        var command = new LeaveSessionCommand
+        {
+            SessionId = id,
+            ParticipantId = request.ParticipantId
+        };
+
+        var result = await _mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = result.Error,
+                errors = new[] { result.Error },
+                timestamp = DateTime.UtcNow
+            });
+        }
         
-        // Notify all participants via SignalR
         await _hubContext.Clients.Group($"demo-{id}").SendAsync("ParticipantLeft", new
         {
             SessionId = id,
+            ParticipantId = request.ParticipantId,
             LeftAt = DateTime.UtcNow
         });
-        
-        return Ok(new {
+
+        return Ok(new
+        {
             success = true,
-            message = "Successfully left session",
+            message = "Successfully left the demo session",
             errors = new string[0],
             timestamp = DateTime.UtcNow
         });
     }
-
-    // WebRTC Signaling
+    
     [HttpPost("sessions/{id}/signal")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SendSignal(string id, [FromBody] WebRTCSignalRequest request)
     {
-        // Forward signal via SignalR to specific participant or broadcast
         if (!string.IsNullOrEmpty(request.TargetParticipantId))
         {
-            // Send to specific participant
             await _hubContext.Clients.Group($"demo-{id}")
                 .SendAsync("ReceiveSignal", new
                 {
@@ -535,7 +514,6 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
         }
         else
         {
-            // Broadcast to all participants
             await _hubContext.Clients.Group($"demo-{id}")
                 .SendAsync("BroadcastSignal", new
                 {
@@ -554,24 +532,8 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
             timestamp = DateTime.UtcNow
         });
     }
-
-    [HttpGet("sessions/{id}/signals")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetSignals(string id, [FromQuery] DateTime? since = null)
-    {
-        // TODO: Implement GetSignalsQuery - for now return empty as signals are real-time via SignalR
-        
-        return Ok(new {
-            success = true,
-            data = new object[0], // Signals are handled via SignalR in real-time
-            message = "Signals retrieved successfully (use SignalR for real-time)",
-            errors = new string[0],
-            timestamp = DateTime.UtcNow
-        });
-    }
-
-    // Recording Upload
+    
+    
     [HttpPost("sessions/{id}/recordings/upload")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -759,7 +721,6 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
             var roomId = $"room-{id}";
             var status = await _mediaServerService.GetStatusAsync();
             
-            // Get all active rooms from MediaServerService
             var mediaServerType = _mediaServerService.GetType();
             var activeRoomsField = mediaServerType.GetField("ActiveRooms", 
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
@@ -797,9 +758,97 @@ public class DemoController(IMediator mediator, IHubContext<DemoHub> hubContext,
             });
         }
     }
+
+    [HttpGet("sessions/{id}/recordings")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetRecordings(string id)
+    {
+        try
+        {
+            var recordings = await _mediaServerService.GetRecordingsAsync(id);
+            var recordingsList = recordings.ToList();
+            
+            var recordingsPath = Path.Combine(Directory.GetCurrentDirectory(), "recordings");
+            var physicalFiles = new List<object>();
+            
+            if (Directory.Exists(recordingsPath))
+            {
+                var files = Directory.GetFiles(recordingsPath, "*.webm");
+                
+                foreach (var file in files)
+                {
+                    var fileName = Path.GetFileName(file);
+                    var fileInfo = new FileInfo(file);
+                    
+                    var parts = fileName.Split('_', 2);
+                    var recordingId = parts.Length > 0 ? parts[0] : Guid.NewGuid().ToString();
+                    
+                    var associatedRecording = recordingsList.FirstOrDefault(r => r.Id == recordingId);
+                    
+                    if (associatedRecording != null)
+                    {
+                        physicalFiles.Add(new {
+                            id = associatedRecording.Id,
+                            fileName = associatedRecording.FileName,
+                            fileSize = fileInfo.Length,
+                            duration = associatedRecording.Duration.ToString(@"hh\:mm\:ss"),
+                            quality = associatedRecording.Config.Quality,
+                            status = associatedRecording.Status.ToString(),
+                            startedAt = associatedRecording.StartedAt,
+                            completedAt = associatedRecording.CompletedAt,
+                            downloadUrl = $"/api/v1/recordings/{associatedRecording.Id}/download",
+                            filePath = file
+                        });
+                    }
+                    else
+                    {
+                        physicalFiles.Add(new {
+                            id = recordingId,
+                            fileName = fileName,
+                            fileSize = fileInfo.Length,
+                            duration = "Unknown",
+                            quality = "Unknown",
+                            status = "Completed",
+                            startedAt = fileInfo.CreationTime,
+                            completedAt = (DateTime?)fileInfo.LastWriteTime,
+                            downloadUrl = $"/api/v1/recordings/{recordingId}/download",
+                            filePath = file
+                        });
+                    }
+                }
+            }
+            
+            return Ok(new {
+                success = true,
+                data = physicalFiles,
+                message = $"Found {physicalFiles.Count} recordings for session {id}",
+                errors = new string[0],
+                timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new {
+                success = false,
+                message = "Error retrieving recordings",
+                errors = new[] { ex.Message },
+                timestamp = DateTime.UtcNow
+            });
+        }
+    }
+
+    private string? GetCurrentUserId()
+    {
+        return User.FindFirst("sub")?.Value ?? User.FindFirst("id")?.Value;
+    }
+
+    private string? GetCurrentUserEmail()
+    {
+        return User.FindFirst("email")?.Value;
+    }
 }
 
-// Request DTOs
 public class CreateDemoSessionRequest
 {
     public string Title { get; set; } = string.Empty;
@@ -852,4 +901,9 @@ public class CreateRoomRequest
     public bool? EnableScreenShare { get; set; }
     public int? MaxParticipants { get; set; }
     public string? RecordingQuality { get; set; }
+}
+
+public class LeaveSessionRequest
+{
+    public string ParticipantId { get; set; } = string.Empty;
 } 

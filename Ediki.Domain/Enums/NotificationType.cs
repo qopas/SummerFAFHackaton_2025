@@ -11,5 +11,6 @@ public enum NotificationType
     Mention = 7,
     PeerReviewRequired = 8,
     General = 9,
-    TeamInvitation = 10
+    TeamInvitation = 10,
+    DemoInvitation = 11
 } 
