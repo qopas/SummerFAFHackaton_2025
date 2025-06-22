@@ -4,6 +4,8 @@ using Ediki.Domain.Interfaces;
 using Ediki.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Ediki.Application.Common.Interfaces;
+using Ediki.Domain.Enums;
 
 namespace Ediki.Application.Features.Teams.Commands.InviteUser;
 
@@ -12,15 +14,18 @@ public class InviteUserCommandHandler : IRequestHandler<InviteUserCommand, Resul
     private readonly ITeamRepository _teamRepository;
     private readonly ITeamMemberRepository _teamMemberRepository;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly INotificationRepository _notificationRepository;
 
     public InviteUserCommandHandler(
         ITeamRepository teamRepository,
         ITeamMemberRepository teamMemberRepository,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        INotificationRepository notificationRepository)
     {
         _teamRepository = teamRepository;
         _teamMemberRepository = teamMemberRepository;
         _userManager = userManager;
+        _notificationRepository = notificationRepository;
     }
 
     public async Task<Result<TeamMemberDto>> Handle(InviteUserCommand request, CancellationToken cancellationToken)
@@ -68,6 +73,26 @@ public class InviteUserCommandHandler : IRequestHandler<InviteUserCommand, Resul
             request.InvitedBy);
 
         await _teamMemberRepository.AddAsync(teamMember);
+
+        // Get inviter information
+        var inviter = await _userManager.FindByIdAsync(request.InvitedBy);
+        var inviterName = inviter != null ? $"{inviter.FirstName} {inviter.LastName}".Trim() : "Unknown";
+
+        // Create notification
+        var notification = new Notification
+        {
+            UserId = request.UserId,
+            Type = NotificationType.TeamInvitation,
+            Priority = NotificationPriority.High,
+            Title = "Team Invitation",
+            Message = $"{inviterName} invited you to join the team '{team.Name}' as {request.Role}",
+            ActionUrl = $"/teams/{team.Id}",
+            RelatedEntityId = team.Id,
+            RelatedEntityType = "Team",
+            CreatedByUserId = request.InvitedBy
+        };
+
+        await _notificationRepository.CreateAsync(notification);
 
         var teamMemberDto = new TeamMemberDto
         {

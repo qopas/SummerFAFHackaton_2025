@@ -21,4 +21,6 @@ public class ProjectMemberDto
     public DateTime? InvitedAt { get; set; }
     public DateTime? AcceptedAt { get; set; }
     public bool IsProjectLead { get; set; }
+    public string ProjectName { get; set; } = string.Empty;
+    public string ProjectDescription { get; set; } = string.Empty;
 } 

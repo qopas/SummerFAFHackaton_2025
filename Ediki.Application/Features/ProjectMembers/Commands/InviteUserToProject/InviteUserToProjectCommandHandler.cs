@@ -6,6 +6,7 @@ using Ediki.Domain.Entities;
 using Ediki.Domain.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Ediki.Domain.Enums;
 
 namespace Ediki.Application.Features.ProjectMembers.Commands.InviteUserToProject;
 
@@ -15,17 +16,20 @@ public class InviteUserToProjectCommandHandler : IRequestHandler<InviteUserToPro
     private readonly IProjectRepository _projectRepository;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ICurrentUserService _currentUserService;
+    private readonly INotificationRepository _notificationRepository;
 
     public InviteUserToProjectCommandHandler(
         IProjectMemberRepository projectMemberRepository,
         IProjectRepository projectRepository,
         UserManager<ApplicationUser> userManager,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        INotificationRepository notificationRepository)
     {
         _projectMemberRepository = projectMemberRepository;
         _projectRepository = projectRepository;
         _userManager = userManager;
         _currentUserService = currentUserService;
+        _notificationRepository = notificationRepository;
     }
 
     public async Task<Result<ProjectMemberDto>> Handle(InviteUserToProjectCommand request, CancellationToken cancellationToken)
@@ -96,7 +100,23 @@ public class InviteUserToProjectCommandHandler : IRequestHandler<InviteUserToPro
 
             // Get inviter information
             var inviter = await _userManager.FindByIdAsync(currentUserId);
-            var inviterName = inviter != null ? $"{inviter.FirstName} {inviter.LastName}" : "Unknown";
+            var inviterName = inviter != null ? $"{inviter.FirstName} {inviter.LastName}".Trim() : "Unknown";
+
+            // Create notification
+            var notification = new Notification
+            {
+                UserId = request.UserId,
+                Type = NotificationType.ProjectInvitation,
+                Priority = NotificationPriority.High,
+                Title = "Project Invitation",
+                Message = $"{inviterName} invited you to join the project '{project.Title}' as {request.Role}",
+                ActionUrl = $"/projects/{project.Id}",
+                RelatedEntityId = project.Id,
+                RelatedEntityType = "Project",
+                CreatedByUserId = currentUserId
+            };
+
+            await _notificationRepository.CreateAsync(notification);
 
             var projectMemberDto = new ProjectMemberDto
             {

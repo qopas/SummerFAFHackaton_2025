@@ -171,4 +171,17 @@ public class ProjectMemberRepository(ApplicationDbContext dbContext) : IProjectM
 
         return true;
     }
+
+    public async Task<List<ProjectMember>> GetPendingInvitationsAsync(string userId)
+    {
+        return await dbContext.ProjectMembers
+            .Include(pm => pm.Project)
+            .Include(pm => pm.InvitedByUser)
+            .Where(pm => pm.UserId == userId && 
+                        pm.InvitedAt != null && 
+                        pm.AcceptedAt == null && 
+                        !pm.IsDeleted)
+            .OrderByDescending(pm => pm.InvitedAt)
+            .ToListAsync();
+    }
 } 

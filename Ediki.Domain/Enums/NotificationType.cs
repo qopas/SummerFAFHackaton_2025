@@ -10,5 +10,6 @@ public enum NotificationType
     ProjectMilestone = 6,
     Mention = 7,
     PeerReviewRequired = 8,
-    General = 9
+    General = 9,
+    TeamInvitation = 10
 } 

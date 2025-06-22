@@ -28,4 +28,5 @@ public interface IProjectMemberRepository
     Task<int> GetMemberCountAsync(string projectId);
     Task<int> GetActiveMemberCountAsync(string projectId);
     Task<bool> CanUserJoinProjectAsync(string projectId, string userId, ProjectRole role);
+    Task<List<ProjectMember>> GetPendingInvitationsAsync(string userId);
 } 
