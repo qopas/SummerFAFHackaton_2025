@@ -71,18 +71,11 @@ public class ProjectsController(IMediator mediator) : BaseApiController(mediator
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> InviteUserToProject(string id, [FromBody] InviteUserToProjectCommand command)
+    public async Task<IActionResult> InviteUserToProject(string id, [FromBody] InviteUserToProjectRequest request)
     {
         try
         {
-            if (id != command.ProjectId)
-                return BadRequest(new { 
-                    success = false,
-                    message = "Project ID mismatch",
-                    errors = new[] { "Project ID in URL doesn't match request body" },
-                    timestamp = DateTime.UtcNow
-                });
-
+            var command = request.ToCommand(id);
             var result = await _mediator.Send(command);
             
             if (!result.IsSuccess)
