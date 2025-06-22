@@ -8,22 +8,13 @@ using Ediki.Domain.Enums;
 
 namespace Ediki.Application.Commands.Auth.Register;
 
-public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<RegisterResult>>
+public class RegisterCommandHandler(
+    UserManager<ApplicationUser> userManager,
+    RoleManager<ApplicationRole> roleManager) : IRequestHandler<RegisterCommand, Result<RegisterResult>>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<ApplicationRole> _roleManager;
-
-    public RegisterCommandHandler(
-        UserManager<ApplicationUser> userManager,
-        RoleManager<ApplicationRole> roleManager)
-    {
-        _userManager = userManager;
-        _roleManager = roleManager;
-    }
-
     public async Task<Result<RegisterResult>> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var existingUser = await _userManager.FindByEmailAsync(request.Email);
+        var existingUser = await userManager.FindByEmailAsync(request.Email);
         if (existingUser != null)
         {
             return Result<RegisterResult>.Failure("User with this email already exists");
@@ -40,10 +31,22 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
             Email = request.Email,
             FirstName = request.FirstName,
             LastName = request.LastName,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            
+            // New fields
+            PreferredRole = request.PreferredRole,
+            Xp = request.Xp,
+            Level = request.Level,
+            Badges = request.Badges ?? new List<string>(),
+            CompletedProjects = request.CompletedProjects,
+            Skills = request.Skills,
+            University = request.University,
+            GraduationYear = request.GraduationYear,
+            Location = request.Location,
+            SocialLinks = request.SocialLinks
         };
 
-        var result = await _userManager.CreateAsync(user, request.Password);
+        var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
             var errors = result.Errors.Select(e => e.Description).ToList();
@@ -56,9 +59,9 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<Re
             roleName = RoleNames.User;
         }
 
-        if (await _roleManager.RoleExistsAsync(roleName))
+        if (await roleManager.RoleExistsAsync(roleName))
         {
-            await _userManager.AddToRoleAsync(user, roleName);
+            await userManager.AddToRoleAsync(user, roleName);
         }
 
         var registerResult = new RegisterResult

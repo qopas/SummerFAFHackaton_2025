@@ -8,23 +8,16 @@ using Ediki.Domain.Entities;
 
 namespace Ediki.Application.Queries.Auth.GetAllUsers;
 
-public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, Result<IEnumerable<UserDto>>>
+public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager) : IRequestHandler<GetAllUsersQuery, Result<IEnumerable<UserDto>>>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager)
-    {
-        _userManager = userManager;
-    }
-
     public async Task<Result<IEnumerable<UserDto>>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
     {
-        var users = await _userManager.Users.Where(u => !u.IsDeleted).ToListAsync(cancellationToken);
+        var users = await userManager.Users.Where(u => !u.IsDeleted).ToListAsync(cancellationToken);
         var userDtos = new List<UserDto>();
 
         foreach (var user in users)
         {
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await userManager.GetRolesAsync(user);
             userDtos.Add(new UserDto
             {
                 Id = user.Id,
@@ -32,7 +25,19 @@ public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, Result<
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Roles = roles.ToList(),
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                
+                // New fields
+                PreferredRole = user.PreferredRole,
+                Xp = user.Xp,
+                Level = user.Level,
+                Badges = user.Badges,
+                CompletedProjects = user.CompletedProjects,
+                Skills = user.Skills,
+                University = user.University,
+                GraduationYear = user.GraduationYear,
+                Location = user.Location,
+                SocialLinks = user.SocialLinks
             });
         }
 

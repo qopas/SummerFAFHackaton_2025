@@ -12,38 +12,27 @@ using Ediki.Domain.Entities;
 
 namespace Ediki.Application.Commands.Auth.Login;
 
-public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginResult>>
+public class LoginCommandHandler(
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    IConfiguration configuration) : IRequestHandler<LoginCommand, Result<LoginResult>>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly IConfiguration _configuration;
-
-    public LoginCommandHandler(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        IConfiguration configuration)
-    {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _configuration = configuration;
-    }
-
     public async Task<Result<LoginResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
+        var user = await userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
             return Result<LoginResult>.Failure("Invalid email or password");
         }
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+        var result = await signInManager.CheckPasswordSignInAsync(user, request.Password, false);
         if (!result.Succeeded)
         {
             return Result<LoginResult>.Failure("Invalid email or password");
         }
 
         var token = await GenerateJwtToken(user);
-        var userRoles = await _userManager.GetRolesAsync(user);
+        var userRoles = await userManager.GetRolesAsync(user);
 
         var loginResult = new LoginResult
         {
@@ -57,7 +46,19 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Roles = userRoles.ToList(),
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                
+                // New fields
+                PreferredRole = user.PreferredRole,
+                Xp = user.Xp,
+                Level = user.Level,
+                Badges = user.Badges,
+                CompletedProjects = user.CompletedProjects,
+                Skills = user.Skills,
+                University = user.University,
+                GraduationYear = user.GraduationYear,
+                Location = user.Location,
+                SocialLinks = user.SocialLinks
             }
         };
 
@@ -66,14 +67,17 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
 
     private async Task<string> GenerateJwtToken(ApplicationUser user)
     {
-        var userRoles = await _userManager.GetRolesAsync(user);
+        var userRoles = await userManager.GetRolesAsync(user);
         var authClaims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id),
             new(ClaimTypes.Name, user.UserName!),
             new(ClaimTypes.Email, user.Email!),
             new("FirstName", user.FirstName),
-            new("LastName", user.LastName)
+            new("LastName", user.LastName),
+            new("PreferredRole", user.PreferredRole.ToString()),
+            new("Level", user.Level.ToString()),
+            new("Xp", user.Xp.ToString())
         };
 
         foreach (var userRole in userRoles)
@@ -81,11 +85,11 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginRes
             authClaims.Add(new Claim(ClaimTypes.Role, userRole));
         }
 
-        var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"] ?? "default-secret-key"));
+        var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"] ?? "default-secret-key"));
 
         var token = new JwtSecurityToken(
-            issuer: _configuration["JWT:ValidIssuer"] ?? "https://localhost",
-            audience: _configuration["JWT:ValidAudience"] ?? "https://localhost",
+            issuer: configuration["JWT:ValidIssuer"] ?? "https://localhost",
+            audience: configuration["JWT:ValidAudience"] ?? "https://localhost",
             expires: DateTime.Now.AddHours(24),
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
