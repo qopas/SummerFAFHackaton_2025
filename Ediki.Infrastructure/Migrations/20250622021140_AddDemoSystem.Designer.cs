@@ -3,6 +3,7 @@ using System;
 using Ediki.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ediki.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250622021140_AddDemoSystem")]
+    partial class AddDemoSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -374,9 +377,6 @@ namespace Ediki.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<int?>("DurationMinutes")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime?>("EndedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -384,11 +384,6 @@ namespace Ediki.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
-
-                    b.Property<bool>("IsPublic")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsRecording")
                         .HasColumnType("boolean");
@@ -399,11 +394,6 @@ namespace Ediki.Infrastructure.Migrations
                     b.Property<string>("RecordingUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<bool>("RequireModeration")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
 
                     b.Property<string>("RoomId")
                         .HasMaxLength(100)
@@ -1164,9 +1154,6 @@ namespace Ediki.Infrastructure.Migrations
                                 .HasColumnType("boolean");
 
                             b1.Property<bool>("AllowScreenAnnotation")
-                                .HasColumnType("boolean");
-
-                            b1.Property<bool>("AllowScreenShare")
                                 .HasColumnType("boolean");
 
                             b1.Property<string>("AllowedDomains")

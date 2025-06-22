@@ -1,5 +1,7 @@
 using Ediki.Application;
 using Ediki.Infrastructure;
+using Ediki.Api.Hubs;
+using Ediki.Api.Services;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,15 +41,21 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddSignalR();
+
+// Register services
+builder.Services.AddScoped<IMediaServerService, MediaServerService>();
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://192.168.0.47:3000", "https://192.168.0.47:3000")
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 var app = builder.Build();
@@ -67,5 +75,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<DemoHub>("/demohub");
 
 app.Run();

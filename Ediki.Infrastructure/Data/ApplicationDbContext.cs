@@ -1,11 +1,12 @@
 ﻿using Ediki.Domain.Entities;
+using Ediki.Application.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ediki.Infrastructure.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options), IApplicationDbContext
 {
     public DbSet<Project> Projects { get; set; }
     public DbSet<Team> Teams { get; set; }
@@ -14,6 +15,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Sprint> Sprints { get; set; }
     public DbSet<Domain.Entities.Task> Tasks { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    
+    // Demo System DbSets
+    public DbSet<DemoSession> DemoSessions { get; set; }
+    public DbSet<DemoParticipant> DemoParticipants { get; set; }
+    public DbSet<DemoRecording> DemoRecordings { get; set; }
+    public DbSet<DemoMessage> DemoMessages { get; set; }
+    public DbSet<DemoAction> DemoActions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

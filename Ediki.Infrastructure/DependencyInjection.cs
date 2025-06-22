@@ -22,6 +22,9 @@ public static class DependencyInjection
         // Database
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            
+        // Register IApplicationDbContext
+        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
         // Identity
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
