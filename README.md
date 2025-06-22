@@ -20,7 +20,6 @@ The project follows **Clean Architecture** principles with clear separation of c
 ├── Ediki.Infrastructure/  # Infrastructure Layer (Data Access)
 ├── Ediki.Tests.Unit/      # Unit Tests
 ├── Ediki.Tests.Integration/ # Integration Tests
-└── Ediki.Postman/         # API Documentation & Testing
 ```
 
 ## 🚀 Features
@@ -34,7 +33,6 @@ The project follows **Clean Architecture** principles with clear separation of c
 - **Real-time Communication** - SignalR-powered live updates
 - **Media Recording** - Screen and audio recording capabilities
 - **Notification System** - Real-time notifications and alerts
-- **Health Monitoring** - Built-in health checks and monitoring
 
 ### API Endpoints
 
